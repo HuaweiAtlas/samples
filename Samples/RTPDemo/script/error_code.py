@@ -1,0 +1,5 @@
+# encoding: utf-8
+# 错误码文档
+HTTP_STATUS_400 = 400
+HTTP_STATUS_500 = 500
+HTTP_STATUS_200 = 200
