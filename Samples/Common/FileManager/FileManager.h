@@ -31,29 +31,44 @@
  * ============================================================================
  */
 
-#ifndef INC_DATA_RECV_H_
-#define INC_DATA_RECV_H_
-#include <hiaiengine/api.h>
+#ifndef DVPPANDOPENCV_FILEMANAGER_H
+#define DVPPANDOPENCV_FILEMANAGER_H
+
+#include <unistd.h>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <set>
+#include <dirent.h>
+#include <string.h>
+#include <memory>
+#include <stdio.h>
 #include <string>
-class CustomDataRecvInterface : public hiai::DataRecvInterface
-{
- public:
-    /**
-    * @ingroup FasterRcnnDataRecvInterface
-    * @brief init
-    * @param [in]desc:std::string
-    */
-    CustomDataRecvInterface(const std::string& filename) :
-        file_name_(filename) {}
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include "hiaiengine/ai_memory.h"
 
-    /**
-    * @ingroup FasterRcnnDataRecvInterface
-    * @brief RecvData RecvData
-    * @param [in]
-    */
-    HIAI_StatusT RecvData(const std::shared_ptr<void>& message);
+using namespace std;
 
- private:
-    std::string file_name_;
+typedef struct FileInfo {
+    uint32_t size;
+    std::shared_ptr<uint8_t> data;
+} FileInfoT;
+
+class FileManager {
+public:
+    bool ExistFile(const string &path);
+    bool ExistDir(const string &path);
+    bool CreateDir(const string &path);
+    bool CreateFile(const string &path);
+    bool ReadFile(const string &path, FileInfo &fileData);
+    vector<string> ReadByExtension(const string &dir, const vector<string> format);
+    string GetExtension(const string &path);
+    string GetName(const string &path);
+    string GetParent(const string &path);
+    bool ChangeDir(const char *dirPath);
+    std::vector<std::string> SplitPath(const std::string &str, const std::set<char> delimiters);
+    bool ReadFileWithDmalloc(const string &path, FileInfo &fileInfo);
 };
-#endif  // INC_DATA_RECV_H_
+#endif  // DVPPANDOPENCV_FILEMANAGER_H

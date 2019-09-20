@@ -32,116 +32,83 @@
  */
 
 #include <unistd.h>
-#include <thread>
-#include <fstream>
-#include <algorithm>
-#include "main.h"
-#include "hiaiengine/api.h"
+#include <vector>
 #include <libgen.h>
-#include <string.h>
+#include <string>
+#include "hiaiengine/api.h"
+#include "hiaiengine/graph.h"
+#include "GraphManager.h"
+#include "FileManager.h"
+#include "AppCommon.h"
+#include "Common.h"
 
+using namespace std;
+using namespace hiai;
+
+// The following constants are parameters for graph
+// and must be consistent with the corresponding fields in the configuration file graph.config.
 static const uint32_t GRAPH_ID = 100;
-int flag = 1;
-std::mutex mt;
-/**
-* @ingroup FasterRcnnDataRecvInterface
-* @brief RecvData RecvData回调，保存文件
-* @param [in]
-*/
-HIAI_StatusT CustomDataRecvInterface::RecvData
-    (const std::shared_ptr<void>& message)
+// chip id.
+static const uint32_t CHIP_ID = 0;
+static const uint32_t SRC_ENGINE_ID = 100;                 // the id of input engine
+static const uint32_t DSTENGINE_ID = 300;                  // the if of dst engine
+static const uint32_t DELAY_USECONDS = 100000;             // time to sleep
+static const string GRAPH_CONFIG_PATH = "./graph.config";  // config file path
+
+int main(int argc, char *argv[])
 {
-    std::shared_ptr<std::string> data =
-        std::static_pointer_cast<std::string>(message);
-    mt.lock();
-    flag--;
-    mt.unlock();
-    return HIAI_OK;
-}
+    // change to executable file directory
+    shared_ptr<FileManager> fileManager(new FileManager());
+    fileManager->ChangeDir(argv[0]);
 
-// Init and create graph
-HIAI_StatusT HIAI_InitAndStartGraph()
-{
-    // Step1: Global System Initialization before using HIAI Engine
-    HIAI_StatusT status = HIAI_Init(0);
+    vector<uint32_t> chipIdArray { CHIP_ID };
+    vector<string> graphConfigPath { GRAPH_CONFIG_PATH };
+    vector<uint32_t> graphIdArray { GRAPH_ID };
+    shared_ptr<GraphManager> graphManager(new GraphManager(graphIdArray, chipIdArray, graphConfigPath));
 
-    // Step2: Create and Start the Graph
-    status = hiai::Graph::CreateGraph("./graph.config");
-    if (status != HIAI_OK)
-    {
-        HIAI_ENGINE_LOG(status, "Fail to start graph");
-        return status;
-    }
-
-    // Step3
-    std::shared_ptr<hiai::Graph> graph = hiai::Graph::GetInstance(GRAPH_ID);
-    if (nullptr == graph)
-    {
-        HIAI_ENGINE_LOG("Fail to get the graph-%u", GRAPH_ID);
-        return status;
-    }
-	int leaf_array[1] = {300};  //leaf node id
-
-	for(int i = 0;i < 1;i++){
-		hiai::EnginePortID target_port_config;
-			target_port_config.graph_id = GRAPH_ID;
-			target_port_config.engine_id = leaf_array[i];
-			target_port_config.port_id = 0;
-			graph->SetDataRecvFunctor(target_port_config,
-				std::shared_ptr<CustomDataRecvInterface>(
-						 new CustomDataRecvInterface("")));
-	}
-	return HIAI_OK;
-}
-int main(int argc, char* argv[])
-{
-    HIAI_StatusT ret = HIAI_OK;
-	char * dirc = strdup(argv[0]);
-	if (dirc)
-	{
-	    char * dname = ::dirname(dirc);
-	    chdir(dname);
-	    HIAI_ENGINE_LOG("chdir to %s", dname);
-	    free(dirc);
-	}
-
-    // 1.create graph
-    ret = HIAI_InitAndStartGraph();
-    if (HIAI_OK != ret)
-    {
-        HIAI_ENGINE_LOG("Fail to start graph");;
+    // 1.init chip
+    HIAI_StatusT ret = graphManager->InitChip();
+    if (ret != HIAI_OK) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Fail to init chip. ret = %d", ret);
         return -1;
     }
 
-    // 2.send data
-    std::shared_ptr<hiai::Graph> graph = hiai::Graph::GetInstance(GRAPH_ID);
-    if (nullptr == graph)
-    {
-        HIAI_ENGINE_LOG("Fail to get the graph-%u", GRAPH_ID);
+    // 2.create graph
+    ret = graphManager->StartGraph();
+    if (ret != HIAI_OK) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Fail to start graph. ret = %d", ret);
+        return -1;
+    }
+    // Register the DstEngine
+    ret = graphManager->SetAllGraphRecvFunctor(graphManager, GRAPH_ID, DSTENGINE_ID);
+    if (ret != HIAI_OK) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Fail to register the DstEngine. ret = %d", ret);
         return -1;
     }
 
-    // send data to SourceEngine 0 port
-    hiai::EnginePortID engine_id;
-    engine_id.graph_id = GRAPH_ID;
-    engine_id.engine_id = 100;
-    engine_id.port_id = 0;
-    std::shared_ptr<std::string> src_data(new std::string);
-    graph->SendData(engine_id, "string", std::static_pointer_cast<void>(src_data));
-
-
-	for (;;)
-    {
-        if(flag <= 0)
-        {
-            break;
-        }else
-        {
-            usleep(100000);
-        }
+    // 3.send data
+    shared_ptr<string> strData(new string);
+    ret = graphManager->SendData(GRAPH_ID, SRC_ENGINE_ID, "string", static_pointer_cast<void>(strData));
+    if (ret != HIAI_OK) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Fail to get send data. ret = %d", ret);
+        return -1;
     }
+
+    // delay in main if graph is running
+    while (graphManager->IsRunning()) {
+        usleep(DELAY_USECONDS);
+    }
+
     printf("Hello Davinci!\n");
-    printf("The sample run success!\n");
-    hiai::Graph::DestroyGraph(GRAPH_ID);
+    // destroy graph
+    ret = graphManager->DestroyAllGraph();
+    if (ret != HIAI_OK) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Fail to destroy graph, program exit. ret = %d", ret);
+        return -1;
+    } else {
+        HIAI_ENGINE_LOG(HIAI_IDE_INFO, "Success to to destroy graph, program exit.");
+    }
+    printf("The sample end!!\n");
+
     return 0;
 }

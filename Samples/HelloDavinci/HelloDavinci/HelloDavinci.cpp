@@ -34,48 +34,39 @@
 #include "HelloDavinci.h"
 #include "hiaiengine/log.h"
 #include "hiaiengine/data_type_reg.h"
-#include <memory>
-#include <fstream>
-#include <sstream>
 #include <stdio.h>
 #include <string.h>
 
 HIAI_REGISTER_DATA_TYPE("input_data_st", input_data_st);
 HIAI_REGISTER_DATA_TYPE("result_output_st", result_output_st);
 
-HIAI_StatusT HelloDavinci::Init(const AIConfig& config,
-const std::vector<AIModelDescription>& model_desc)
+HIAI_StatusT HelloDavinci::Init(const AIConfig &config, const std::vector<AIModelDescription> &model_desc)
 {
     return HIAI_OK;
 }
 
-HelloDavinci::~HelloDavinci()
-{
+HelloDavinci::~HelloDavinci(){}
 
-}
-
-/**
-* @ingroup hiaiengine
-* @brief HIAI_DEFINE_PROCESS : implementaion of the engine
-* @[in]: engine name and the number of input
-*/
-HIAI_IMPL_ENGINE_PROCESS("HelloDavinci", HelloDavinci, INPUT_SIZE)
+HIAI_IMPL_ENGINE_PROCESS("HelloDavinci", HelloDavinci, HELLODAVINCI_INPUT_SIZE)
 {
     std::shared_ptr<input_data_st> input_arg = std::static_pointer_cast<input_data_st>(arg0);
     int hiai_ret;
 
-    string str = "This message is from HelloDavinci\n"; 
-    char *in_buffer = new char[str.length()+1];
-    strcpy(in_buffer, str.c_str());   
+    HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[SrcEngine] Receive data from last engine: %d", input_arg->input_info.type);
+    string str = "This message is from HelloDavinci\n";
+    char *in_buffer = new char[str.length() + 1];
+    for (int i = 0; i < str.length(); i++) {
+        in_buffer[i] = str[i];
+    }
+    in_buffer[str.length()] = '\0';
 
     std::shared_ptr<result_output_st> out = std::make_shared<result_output_st>();
-    out->result_data.size = str.length()+1;
-    out->result_data.data =  std::shared_ptr<uint8_t>((uint8_t *)in_buffer);
+    out->result_data.size = str.length() + 1;
+    out->result_data.data = std::shared_ptr<uint8_t>(reinterpret_cast<uint8_t *>(in_buffer), [](uint8_t *p) { delete[] p; });
 
     hiai_ret = SendData(0, "result_output_st", std::static_pointer_cast<void>(out));
-    if(HIAI_OK != hiai_ret)
-    {
-        HIAI_ENGINE_LOG("send_data failed!hiai_ret = %d", hiai_ret);
+    if (HIAI_OK != hiai_ret) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "send_data failed!hiai_ret = %d", hiai_ret);
         return hiai_ret;
     }
 

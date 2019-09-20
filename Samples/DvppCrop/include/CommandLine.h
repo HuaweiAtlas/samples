@@ -1,8 +1,8 @@
 /**
  * ============================================================================
  *
- * Copyright (C) 2019, Huawei Technologies Co., Ltd. All Rights Reserved.
- *
+ * Copyright (c) Huawei Technologies Co., Ltd. 2018-2019. All rights reserved.
+ * Description: Atlas Sample
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -31,63 +31,26 @@
  * ============================================================================
  */
 
-#ifndef _APP_COMMON_H_
-#define _APP_COMMON_H_
+#ifndef COMMAND_LINE_H
+#define COMMAND_LINE_H
+#include <string>
+using namespace std;
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <sys/time.h>
-#include "hiaiengine/data_type.h"
-#include "hiaiengine/data_type_reg.h"
+static const char HELP_MESSAGE[] = "Print a usage message.";
+static const char INPUT_MESSAGE[] =
+        "Optional. Specify the image, this sample only support jpeg format. default: ../data/test.jpeg.";
 
-using namespace hiai;
-
-typedef struct
+static const string HELP_CMD = "-h";
+static const string INPUT_CMD = "-i";
+/**
+ * @brief This function show a help message
+ */
+static void ShowUsage()
 {
-    uint32_t type;
-}comm_context_st;
-template <class Archive>
-void serialize(Archive& ar, comm_context_st& data) {
-    ar(data.type);
+    printf("\n");
+    printf("Options:\n");
+    printf("\n");
+    printf("    -h                         %s\n", HELP_MESSAGE);
+    printf("    -i  '<path>'               %s\n", INPUT_MESSAGE);
 }
-
-typedef struct input_data
-{
-    comm_context_st input_info;
-}input_data_st;
-template<class Archive>
-void serialize(Archive& ar, input_data_st& data)
-{
-    ar(data.input_info);
-}
-
-
-typedef struct Output
-{
-    int32_t size;
-    std::shared_ptr<u_int8_t> data;
-}OutputT;
-template<class Archive>
-void serialize(Archive& ar, OutputT& data)
-{
-    ar(data.size);
-    if (data.size > 0 && data.data.get() == nullptr)
-    {
-        data.data.reset(new u_int8_t[data.size]);
-    }
-
-    ar(cereal::binary_data(data.data.get(), data.size * sizeof(u_int8_t)));
-}
-
-typedef struct result_output
-{
-    comm_context_st input_info;
-    OutputT result_data;
-}result_output_st;
-template<class Archive>
-void serialize(Archive& ar, result_output_st& data)
-{
-   ar(data.input_info, data.result_data);
-}
-
-#endif
+#endif  // COMMAND_LINE_H_

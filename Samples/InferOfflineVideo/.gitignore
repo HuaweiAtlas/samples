@@ -1,0 +1,8 @@
+.vscode/
+build-vscode/
+*.om
+*.264
+*.265
+*.mp4
+*.txt
+.idea/

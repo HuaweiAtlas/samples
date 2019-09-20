@@ -33,41 +33,39 @@
 
 #include "SrcEngine.h"
 #include <hiaiengine/log.h>
-#include <stdio.h>
 
 HIAI_REGISTER_DATA_TYPE("input_data_st", input_data_st);
 
-HIAI_StatusT SrcEngine::Init(const hiai::AIConfig& config, const  std::vector<hiai::AIModelDescription>& model_desc)
+HIAI_StatusT SrcEngine::Init(const hiai::AIConfig &config, const std::vector<hiai::AIModelDescription> &model_desc)
 {
-        if (NULL == data_config_)
-        {
-            data_config_ = std::make_shared<comm_context_st>();
-        }
+    if (data_config_ == NULL) {
+        data_config_ = std::make_shared<comm_context_st>();
+    }
 
-        for (int index = 0; index < config.items_size(); ++index)
-        {
-            const ::hiai::AIConfigItem& item = config.items(index);
-            std::string name = item.name();
-            if(name == "type"){
-                std::string value = item.value();
-                data_config_->type = atoi(value.data());
-                std::cout << "[SrcEngine] data type - " << data_config_->type<<std::endl;
-            }
+    for (int index = 0; index < config.items_size(); ++index) {
+        const ::hiai::AIConfigItem &item = config.items(index);
+        std::string name = item.name();
+        if (name == "dataType") {
+            std::string value = item.value();
+            data_config_->type = atoi(value.data());
         }
-        return HIAI_OK;
+    }
+    return HIAI_OK;
 }
 
-HIAI_IMPL_ENGINE_PROCESS("SrcEngine", SrcEngine, INPUT_SIZE)
+HIAI_IMPL_ENGINE_PROCESS("SrcEngine", SrcEngine, SRCENGINE_INPUT_SIZE)
 {
+    std::shared_ptr<input_data_st> dataToSend = std::make_shared<input_data_st>();
+    dataToSend->input_info = *data_config_;
 
-    std::shared_ptr<input_data_st> data_to_send = std::make_shared<input_data_st>();
-    data_to_send->input_info = *data_config_;
-
-    int hiai_ret = SendData(0, "input_data_st", std::static_pointer_cast<void>(data_to_send));
-    if (hiai_ret != HIAI_OK)
-    {
-        HIAI_ENGINE_LOG("[SrcEngine]SendData fail!ret = %d", hiai_ret);
+    int hiai_ret = SendData(0, "input_data_st", std::static_pointer_cast<void>(dataToSend));
+    if (hiai_ret != HIAI_OK) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[SrcEngine]SendData fail!ret = %d", hiai_ret);
     }
 
     return HIAI_OK;
+}
+
+SrcEngine::~SrcEngine()
+{
 }

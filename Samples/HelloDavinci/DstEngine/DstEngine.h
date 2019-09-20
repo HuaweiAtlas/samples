@@ -31,8 +31,8 @@
  * ============================================================================
  */
 
-#ifndef OUTPUT_ENGINE_H_
-#define OUTPUT_ENGINE_H_
+#ifndef OUTPUT_ENGINE_H
+#define OUTPUT_ENGINE_H
 #include "hiaiengine/api.h"
 #include "hiaiengine/ai_model_manager.h"
 #include "hiaiengine/ai_types.h"
@@ -41,30 +41,26 @@
 #include "hiaiengine/ai_tensor.h"
 #include "hiaiengine/data_type_reg.h"
 #include <hiaiengine/multitype_queue.h>
-#include "app_common.h"
+#include "AppCommon.h"
+#include "Common.h"
 
-#define INPUT_SIZE 1
-#define OUTPUT_SIZE 1
+#define DSTENGINE_INPUT_SIZE  1
+#define DSTENGINE_OUTPUT_SIZE 1
 
 using hiai::Engine;
 using namespace hiai;
 
-
-
 class DstEngine : public Engine {
 public:
-    DstEngine() {}
-    HIAI_StatusT Init(const hiai::AIConfig& config, const  std::vector<hiai::AIModelDescription>& model_desc);
+    DstEngine(){}
+    HIAI_StatusT Init(const hiai::AIConfig &config, const std::vector<hiai::AIModelDescription> &model_desc);
+    ~DstEngine();
     /**
-    * @ingroup hiaiengine
-    * @brief HIAI_DEFINE_PROCESS : 重载Engine Process处理逻辑
-    * @[in]: 定义一个输入端口，一个输出端口
-    */
-    HIAI_DEFINE_PROCESS(INPUT_SIZE, OUTPUT_SIZE)
-private:
-
-    // 私有实现一个成员变量，用来缓存输入队列
+     * @ingroup hiaiengine
+     * @brief HIAI_DEFINE_PROCESS : reload Engine Process
+     * @[in]: define the number of input and output
+ */
+    HIAI_DEFINE_PROCESS(DSTENGINE_INPUT_SIZE, DSTENGINE_OUTPUT_SIZE)
 };
-
 
 #endif

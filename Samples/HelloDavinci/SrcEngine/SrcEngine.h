@@ -31,37 +31,35 @@
  * ============================================================================
  */
 
-#ifndef _SRCENGINE_H_
-#define _SRCENGINE_H_
+#ifndef SRCENGINE_H
+#define SRCENGINE_H
 #include "hiaiengine/api.h"
 #include "hiaiengine/ai_model_manager.h"
 #include "hiaiengine/ai_types.h"
 #include "hiaiengine/data_type.h"
 #include "hiaiengine/engine.h"
-#include "app_common.h"
+#include "AppCommon.h"
+#include "Common.h"
 
-#define INPUT_SIZE 1
-#define OUTPUT_SIZE 1
+#define SRCENGINE_INPUT_SIZE  1
+#define SRCENGINE_OUTPUT_SIZE 1
 
 using hiai::Engine;
 using namespace hiai;
 
-
 class SrcEngine : public Engine {
 public:
-    SrcEngine() {}
-    HIAI_StatusT Init(const hiai::AIConfig& config, const  std::vector<hiai::AIModelDescription>& model_desc);
+    SrcEngine(){}
+    HIAI_StatusT Init(const hiai::AIConfig &config, const std::vector<hiai::AIModelDescription> &model_desc);
+    ~SrcEngine();
     /**
-    * @ingroup hiaiengine
-    * @brief HIAI_DEFINE_PROCESS : 重载Engine Process处理逻辑
-    * @[in]: 定义一个输入端口，一个输出端口
-    */
-    HIAI_DEFINE_PROCESS(INPUT_SIZE, OUTPUT_SIZE)
+* @ingroup hiaiengine
+* @brief HIAI_DEFINE_PROCESS : implementaion of the engine
+* @[in]: engine name and the number of input
+ */
+    HIAI_DEFINE_PROCESS(SRCENGINE_INPUT_SIZE, SRCENGINE_OUTPUT_SIZE)
 private:
-
     std::shared_ptr<comm_context_st> data_config_;
-
 };
-
 
 #endif

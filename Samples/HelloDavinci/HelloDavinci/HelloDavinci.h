@@ -31,26 +31,17 @@
  * ============================================================================
  */
 
-#ifndef HelloDavinci_ENGINE_H_
-#define HelloDavinci_ENGINE_H_
+#ifndef HelloDavinci_ENGINE_H
+#define HelloDavinci_ENGINE_H
+#include <vector>
+#include <string>
 #include "hiaiengine/engine.h"
 #include "hiaiengine/data_type_reg.h"
-#include "app_common.h"
-#include <iostream>
-#include <string>
-#include <dirent.h>
-#include <memory>
-#include <unistd.h>
-#include <vector>
-#include <stdint.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <malloc.h>
-#include <stdio.h>
-#include <dlfcn.h>
+#include "AppCommon.h"
+#include "Common.h"
 
-#define INPUT_SIZE 1
-#define OUTPUT_SIZE 1
+#define HELLODAVINCI_INPUT_SIZE  1
+#define HELLODAVINCI_OUTPUT_SIZE 1
 
 using hiai::Engine;
 using namespace std;
@@ -59,17 +50,15 @@ class HelloDavinci : public Engine {
 public:
     ~HelloDavinci();
 
-    HIAI_StatusT Init(const AIConfig& config,
-    const std::vector<AIModelDescription>& model_desc);
+    HIAI_StatusT Init(const AIConfig &config, const std::vector<AIModelDescription> &model_desc);
 
     /**
-    * @ingroup hiaiengine
-    * @brief HIAI_DEFINE_PROCESS : reload Engine Process
-    * @[in]: define the number of input and output
-    */
-    HIAI_DEFINE_PROCESS(INPUT_SIZE, OUTPUT_SIZE)
+     * @ingroup hiaiengine
+     * @brief HIAI_DEFINE_PROCESS : reload Engine Process
+     * @[in]: define the number of input and output
+ */
+    HIAI_DEFINE_PROCESS(HELLODAVINCI_INPUT_SIZE, HELLODAVINCI_OUTPUT_SIZE)
 private:
-
 };
 
 #endif

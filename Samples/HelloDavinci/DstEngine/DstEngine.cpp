@@ -35,46 +35,36 @@
 #include <hiaiengine/log.h>
 #include <hiaiengine/ai_types.h>
 #include "hiaiengine/ai_model_parser.h"
-//#include "tensor.h"
 #include <vector>
-#include <unistd.h>
-#include <thread>
-#include <fstream>
-#include <algorithm>
-#include <iostream>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <sstream>
-#include <stdio.h>
 
 HIAI_REGISTER_DATA_TYPE("result_output_st", result_output_st);
 
-
-HIAI_StatusT DstEngine::Init(const hiai::AIConfig& config, const  std::vector<hiai::AIModelDescription>& model_desc)
+HIAI_StatusT DstEngine::Init(const hiai::AIConfig &config, const std::vector<hiai::AIModelDescription> &model_desc)
 {
-
-        return HIAI_OK;
+    return HIAI_OK;
 }
 
-HIAI_IMPL_ENGINE_PROCESS("DstEngine", DstEngine, INPUT_SIZE)
+HIAI_IMPL_ENGINE_PROCESS("DstEngine", DstEngine, DSTENGINE_INPUT_SIZE)
 {
     char path[128];
 
     std::shared_ptr<result_output_st> result = std::static_pointer_cast<result_output_st>(arg0);
-    FILE *fpOut = fopen("../out/result_files/davinci_log_info.txt", "wb+");
-    if( fpOut )
-    {
+    FILE *fpOut = fopen("./davinci_log_info.txt", "wb+");
+    if (fpOut != NULL) {
         fwrite(result->result_data.data.get(), 1, result->result_data.size, fpOut);
-        fflush( fpOut );
-        fclose( fpOut );
+        fflush(fpOut);
+        fclose(fpOut);
     }
 
     std::shared_ptr<std::string> dst_data(new std::string);
     int hiai_ret = SendData(0, "string", std::static_pointer_cast<void>(dst_data));
-    if (hiai_ret != HIAI_OK)
-    {
-        HIAI_ENGINE_LOG("[SrcEngine]SendData fail!ret = %d", hiai_ret);
+    if (hiai_ret != HIAI_OK) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[SrcEngine]SendData fail!ret = %d", hiai_ret);
     }
 
     return HIAI_OK;
+}
+
+DstEngine::~DstEngine()
+{
 }
