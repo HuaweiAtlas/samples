@@ -11,7 +11,7 @@ StreamPuller(Host) > VDecEngine(Device) > SSDDetection(Device) > ObjectClassific
 
 ## 支持的产品
 
-Atlas 300 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
+Atlas 300 (Model 3000)
 
 ## 支持的版本
 
@@ -34,15 +34,11 @@ export FFMPEG_PATH = /path/to/ffmpeg
 
 ## 编译
 
-编译Atlas300 (Model 3000) 或 Atlas 300 (Model 3010)程序
+编译Atlas300 (Model 3000)程序
 ```bash
 ./build.sh A300
 ```
 
-编译Atlas 500 (Model 3010)程序
-```bash
-./build.sh A500
-```
 
 ## 配置
 
