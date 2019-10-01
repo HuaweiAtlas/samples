@@ -28,7 +28,7 @@ npu-smi info
 The path of 'ffmpeg' needs to be exported to the environment variable 'FFMPEG_PATH'. The path should contain 'include' and 'lib' folders.
 
 ```bash
-export FFMPEG_PATH = /path/to/ffmpeg
+export FFMPEG_PATH=/path/to/ffmpeg
 ```
 
 ## Compilation

@@ -29,7 +29,7 @@ npu-smi info
 需要导出 `ffmpeg` 的路径到环境变量 `FFMPEG_PATH`。路径下应该包含 `include` 和 `lib` 文件夹。
 
 ```bash
-export FFMPEG_PATH = /path/to/ffmpeg
+export FFMPEG_PATH=/path/to/ffmpeg
 ```
 
 ## 编译
