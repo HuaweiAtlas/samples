@@ -79,7 +79,7 @@ HIAI_StatusT HIAI_InitAndStartGraph(const std::vector<uint32_t>& graphs2run)
         return HIAI_ERROR;
     }
     // Step1: Global System Initialization before using HIAI Engine
-    HIAI_StatusT status = HIAI_Init(1);
+    HIAI_StatusT status = HIAI_Init(0);
     hiai::GraphConfigList glist;
     hiai::Graph::ParseConfigFile(GRAPH_FILENAME, glist);
     // append graphs
