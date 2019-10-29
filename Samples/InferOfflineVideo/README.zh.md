@@ -107,6 +107,7 @@ export FFMPEG_PATH=/path/to/ffmpeg
 ## 运行
 
 ```bash
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:<Ffmpeg Path>/lib
 cd out
 ./main 
 ```
