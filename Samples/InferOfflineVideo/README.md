@@ -106,6 +106,7 @@ label file path config
 ## Execution
 
 ```bash
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:<Ffmpeg Path>/lib
 cd out
 ./main
 ```
