@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
+add_compile_options(-std=c++11 -fstack-protector-all -Wl,-z,relro,-z,now,-z,noexecstack)
 project(DecodeVideo)
 
 set(CMAKE_C_STANDARD 11)

@@ -41,7 +41,7 @@ static void showUsage()
     printf("Usage: main [Options...]\n");
     printf("Options:\n");
     printf("    -h                             show usage message.\n");
-    printf("    -g                             graph count per chip, default is 1\n");
+    printf("    -g                             graph count per chip, default is 1, should be in [1, 16]\n");
     printf("Eg:\n");
     printf("    ./main -g 2\n");
 }

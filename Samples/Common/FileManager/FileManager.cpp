@@ -34,24 +34,50 @@
 #include <libgen.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-struct stat sb;
+#include <stdlib.h>
+#include <securec.h>
 
+using namespace std;
 #define BUF_SIZE 32U
 const int FILE_MODE = 777;
 const int TWO = 2;
 static const uint32_t DEMALLOC_TIMEOUT = 10000;
 static const string SLASH = "/";
-bool FileManager::ExistFile(const string &path)
+bool FileManager::ExistFile(const string &dirPath)
 {
-    if (stat(path.c_str(), &sb) == 0 && S_ISREG(sb.st_mode)) {
+    struct stat fileSat;
+    char c[PATH_MAX + 1] = { 0x00 };
+    errno_t err = strcpy_s(c, PATH_MAX + 1, dirPath.c_str());
+    if (err != EOK) {
+        printf("[ERROR] strcpy %s failed!\n", c);
+        return false;
+    }
+
+    char path[PATH_MAX + 1] = { 0x00 };
+    if ((strlen(c) > PATH_MAX) || (realpath(c, path) == NULL)) {
+        printf("Get canonnicalize path fail!\n");
+        return false;
+    }
+    if (stat(c, &fileSat) == 0 && S_ISREG(fileSat.st_mode)) {
         return true;
     }
     return false;
 }
 
-bool FileManager::ExistDir(const string &path)
+bool FileManager::ExistDir(const string &dirPath)
 {
-    DIR *dir = opendir(path.c_str());
+    char c[PATH_MAX + 1] = { 0x00 };
+    errno_t err = strcpy_s(c, PATH_MAX + 1, dirPath.c_str());
+    if (err != EOK) {
+        printf("[ERROR] strcpy %s failed!\n", c);
+        return false;
+    }
+    char path[PATH_MAX + 1] = { 0x00 };
+    if ((strlen(c) > PATH_MAX) || (realpath(c, path) == NULL)) {
+        printf("Get canonnicalize path fail!\n");
+        return false;
+    }
+    DIR *dir = opendir(c);
     if (dir != NULL) {
         closedir(dir);
         return true;
@@ -62,19 +88,44 @@ bool FileManager::ExistDir(const string &path)
 
 bool FileManager::FileManager::CreateDir(const string &dirPath)
 {
-    int dirExist = access(dirPath.c_str(), W_OK);
+    char c[PATH_MAX + 1] = { 0x00 };
+    errno_t err = strcpy_s(c, PATH_MAX + 1, dirPath.c_str());
+    if (err != EOK) {
+        printf("[ERROR] strcpy %s failed!\n", c);
+        return false;
+    }
+    char path[PATH_MAX + 1] = { 0x00 };
+    if ((strlen(c) > PATH_MAX) || (realpath(c, path) == NULL)) {
+        printf("Get canonnicalize path fail!\n");
+        return false;
+    }
+    int dirExist = access(c, W_OK);
     if (-1 == dirExist) {
-        if (mkdir(dirPath.c_str(), FILE_MODE) == -1) {
+        if (mkdir(c, FILE_MODE) == -1) {
             return false;
         }
     }
     return true;
 }
 
-bool FileManager::CreateFile(const string &path)
+bool FileManager::CreateFile(const string &dirPath)
 {
-    if (!ExistFile(path)) {
-        if (FILE *file = fopen(path.c_str(), "wb")) {
+    char c[PATH_MAX + 1] = { 0x00 };
+    errno_t err = strcpy_s(c, PATH_MAX + 1, dirPath.c_str());
+    if (err != EOK) {
+        printf("[ERROR] strcpy %s failed!\n", c);
+        return false;
+    }
+
+    char path[PATH_MAX + 1] = { 0x00 };
+    if ((strlen(c) > PATH_MAX) || (realpath(c, path) == NULL)) {
+        printf("Get canonnicalize path fail!\n");
+        return false;
+    }
+
+    std::string pathStr(path, path + strlen(path));
+    if (!ExistFile(pathStr)) {
+        if (FILE *file = fopen(path, "wb")) {
             fclose(file);
             return true;
         }
@@ -82,64 +133,95 @@ bool FileManager::CreateFile(const string &path)
     return false;
 }
 
-bool FileManager::ReadFile(const string &path, FileInfo &fileData)
+bool FileManager::ReadFile(const string &dirPath, FileInfo &fileData)
 {
-    FILE *fp = fopen(path.c_str(), "rb");
+    char c[PATH_MAX + 1] = { 0x00 };
+    errno_t err = strcpy_s(c, PATH_MAX + 1, dirPath.c_str());
+    if (err != EOK) {
+        printf("[ERROR] strcpy %s failed!\n", c);
+        return false;
+    }
+
+    char path[PATH_MAX + 1] = { 0x00 };
+    if ((strlen(c) > PATH_MAX) || (realpath(c, path) == NULL)) {
+        printf("Get canonnicalize path fail!\n");
+        return false;
+    }
+    FILE *fp = fopen(path, "rb");
     if (NULL == fp) {
         printf("Open file failed!");
         return false;
     }
     fseek(fp, 0, SEEK_END);
-    uint32_t fileSize = ftell(fp);
+    long fileSize = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    if (fileSize == 0) {
-        printf("MemAlloc Check Fail.");
-        return false;
-    }
-    uint8_t *buffer = new uint8_t[fileSize];
-    uint32_t readRet = fread(buffer, 1, fileSize, fp);
-    if (readRet <= 0) {
-        return false;
+    if (fileSize > 0) {
+        fileData.size = fileSize;
+        fileData.data = shared_ptr<uint8_t>(new uint8_t[fileSize]);
+        uint32_t readRet = fread(fileData.data.get(), 1, fileSize, fp);
+        if (readRet <= 0) {
+            if (fileData.data.get() != nullptr) {
+                delete fileData.data.get();
+            }
+            fclose(fp);
+            return false;
+        }
+        fclose(fp);
+        return true;
     }
     fclose(fp);
-
-    fileData.size = fileSize;
-    fileData.data = shared_ptr<uint8_t>(buffer, [](uint8_t *p) { delete p; });
-    return true;
+    return false;
 }
 
-bool FileManager::ReadFileWithDmalloc(const string &path, FileInfo &fileInfo)
+bool FileManager::ReadFileWithDmalloc(const string &dirPath, FileInfo &fileInfo)
 {
-    FILE *fp = fopen(path.c_str(), "rb");
+    char c[PATH_MAX + 1] = { 0x00 };
+    errno_t err = strcpy_s(c, PATH_MAX + 1, dirPath.c_str());
+    if (err != EOK) {
+        printf("[ERROR] strcpy %s failed!\n", c);
+        return false;
+    }
+    char path[PATH_MAX + 1] = { 0x00 };
+    if ((strlen(c) > PATH_MAX) || (realpath(c, path) == NULL)) {
+        printf("Get canonnicalize path fail!\n");
+        return false;
+    }
+    FILE *fp = fopen(path, "rb");
     if (fp == nullptr) {
         printf("Open file failed!");
         return false;
     }
     fseek(fp, 0, SEEK_END);
-    uint32_t fileSize = ftell(fp);
+    long int fileSize = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    if(fileSize <= 0){
-        printf("Demalloc Check Fail.");
-        return false;
-    }
-    uint8_t *buffer = nullptr;
-    HIAI_StatusT ret = hiai::HIAIMemory::HIAI_DMalloc(fileSize, (void*&)buffer, DEMALLOC_TIMEOUT);
-    if(ret != HIAI_OK){
-        printf("Demalloc Fail.");
-        return false;
-    }
-    if(buffer == nullptr){
-        printf("Demalloc Fail.");
-        return false;
-    }
-    size_t len = fread(buffer, 1, fileSize, fp);
-    if(len < 0){
-        return false;
+    if (fileSize > 0) {
+        uint8_t *buffer = nullptr;
+        HIAI_StatusT ret = hiai::HIAIMemory::HIAI_DMalloc(fileSize, (void *&)buffer, DEMALLOC_TIMEOUT);
+        if (ret != HIAI_OK) {
+            if (buffer != nullptr) {
+                delete buffer;
+            }
+            printf("Demalloc Fail.");
+            fclose(fp);
+            return false;
+        }
+        if (buffer == nullptr) {
+            printf("Demalloc Fail.");
+            fclose(fp);
+            return false;
+        }
+        size_t len = fread(buffer, 1, fileSize, fp);
+        if (len < 0) {
+            fclose(fp);
+            return false;
+        }
+        fileInfo.size = fileSize;
+        fileInfo.data = shared_ptr<uint8_t>(buffer, [](uint8_t *p) { hiai::HIAIMemory::HIAI_DFree(p); });
+        fclose(fp);
+        return true;
     }
     fclose(fp);
-    fileInfo.size = fileSize;
-    fileInfo.data = shared_ptr<uint8_t>(buffer, [](uint8_t* p){hiai::HIAIMemory::HIAI_DFree(p);});
-    return true;
+    return false;
 }
 
 string FileManager::GetExtension(const string &filePath)
@@ -151,9 +233,20 @@ string FileManager::GetExtension(const string &filePath)
 
 vector<string> FileManager::ReadByExtension(const string &dirPath, const vector<string> format)
 {
-    DIR *dirp;
-    dirp = opendir(dirPath.c_str());
     vector<string> fileToRead;
+    char c[PATH_MAX + 1] = { 0x00 };
+    errno_t err = strcpy_s(c, PATH_MAX + 1, dirPath.c_str());
+    if (err != EOK) {
+        printf("[ERROR] strcpy %s failed!\n", c);
+        return fileToRead;
+    }
+    char path[PATH_MAX + 1] = { 0x00 };
+    if ((strlen(c) > PATH_MAX) || (realpath(c, path) == NULL)) {
+        printf("[SaveFile} get canonnicalize path fail!\n");
+        return fileToRead;
+    }
+    DIR *dirp;
+    dirp = opendir(path);
 
     if (dirp == NULL) {
         return fileToRead;
@@ -203,15 +296,22 @@ char *DirName(const char *dirc)
 
 bool FileManager::ChangeDir(const char *argv)
 {
+    char path[PATH_MAX + 1] = { 0x00 };
+    if ((strlen(argv) > PATH_MAX) || (realpath(argv, path) == NULL)) {
+        printf("Get canonnicalize path fail!\n");
+        return false;
+    }
     char *dirc = strdup(argv);
     if (dirc != nullptr) {
         char *dname = DirName(dirc);
-        if(chdir(dname) == 0){
+        if (chdir(dname) == 0) {
+            // do nothing;
+        } else {
             free(dirc);
-        } else{
             return false;
         }
     }
+    free(dirc);
     return true;
 }
 

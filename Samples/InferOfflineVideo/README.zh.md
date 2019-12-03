@@ -11,11 +11,11 @@ StreamPuller(Host) > VDecEngine(Device) > SSDDetection(Device) > ObjectClassific
 
 ## 支持的产品
 
-Atlas 300 (Model 3000)
+Atlas 200 (Model 3010), Atlas 300 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
 
 ## 支持的版本
 
-1.3.T33.B890
+1.3.T33.B890 1.3.2.B893 1.31.T12.B120 1.31.T15.B150
 
 版本号查询方法，在Atlas产品环境下，运行以下命令：
 ```bash
@@ -26,19 +26,49 @@ npu-smi info
 
 - ffmpeg 4.1
 
-需要导出 `ffmpeg` 的路径到环境变量 `FFMPEG_PATH`。路径下应该包含 `include` 和 `lib` 文件夹。
+源码下载地址：https://github.com/FFmpeg/FFmpeg/releases
+
+ffmpeg源码编译和安装配置的方法， 可以参考Ascend开发者论坛：https://bbs.huaweicloud.com/forum/thread-25834-1-1.html，
+更多Atlas产品交叉编译的方法请参考产品开发指南，或者自行搜索网上资源。
+
+完成安装配置后，需要导出 `ffmpeg` 的路径到环境变量 `FFMPEG_PATH`。路径下应该包含 `include` 和 `lib` 文件夹。
 
 ```bash
 export FFMPEG_PATH=/path/to/ffmpeg
 ```
 
+- 模型转换
+
+参考data\models\README.md下载并转换相关模型。
+
+
 ## 编译
 
-编译Atlas300 (Model 3000)程序
+编译Atlas300 (Model 3000) 或 Atlas 300 (Model 3010)程序
 ```bash
 ./build.sh A300
 ```
 
+编译Atlas 500 (Model 3010)程序
+```bash
+./build.sh A500
+```
+
+备注: 编译脚本build.sh默认运行参数为"A300"，运行以下命令，将默认编译Atlas300程序。
+```bash
+./build.sh 
+```
+
+编译 Atlas 200 (Model 3010) 程序
+```bash
+# 如果未安装 A200 的交叉编译器，请先安装编译器
+# apt-get install g++-aarch64-linux-gnu gcc-aarch64-linux-gnu
+# 另外也需要配套编译的 ffmpeg，并指定路径
+# export FFMPEG_PATH=/path/to/ffmpeg/of/A200
+# DDK 指定
+# export DDK_HOME=/path/to/ddk/of/A200
+./build.sh A200
+```
 
 ## 配置
 
@@ -107,7 +137,6 @@ export FFMPEG_PATH=/path/to/ffmpeg
 ## 运行
 
 ```bash
-export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:<Ffmpeg Path>/lib
 cd out
 ./main 
 ```

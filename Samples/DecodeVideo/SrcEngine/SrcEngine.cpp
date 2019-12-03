@@ -32,20 +32,20 @@
  */
 
 #include "SrcEngine.h"
+#include "SampleMemory.h"
 #include "common_data_type.h"
-#include "hiaiengine/ai_memory.h"
 #include "hiaiengine/log.h"
 #include <cstdio>
 
 HIAI_REGISTER_SERIALIZE_FUNC("EngineTransNewT", EngineTransNewT, GetTransSearPtr, GetTransDearPtr);
 HIAI_REGISTER_SERIALIZE_FUNC("StreamRawData", StreamRawData, GetStreamRawDataSearPtr, GetStreamRawDataDearPtr);
 
-HIAI_StatusT SrcEngine::Init(const hiai::AIConfig &config, const std::vector<hiai::AIModelDescription> &model_desc)
+HIAI_StatusT SrcEngine::Init(const hiai::AIConfig& config, const std::vector<hiai::AIModelDescription>& model_desc)
 {
     printf("[SrcEngine] start init!\n");
 
     for (int index = 0; index < config.items_size(); ++index) {
-        const ::hiai::AIConfigItem &item = config.items(index);
+        const ::hiai::AIConfigItem& item = config.items(index);
         std::string name = item.name();
         if (name == "channel_id") {
             std::string value = item.value();
@@ -72,9 +72,20 @@ HIAI_IMPL_ENGINE_PROCESS("SrcEngine", SrcEngine, SRC_INPUT_SIZE)
 {
     HIAI_StatusT ret = HIAI_OK;
     std::shared_ptr<std::string> inputFile = std::static_pointer_cast<std::string>(arg0);
-    printf("[SrcEngine] open file %s\n", inputFile->c_str());
-    FILE *fp;
-    fp = fopen(inputFile->c_str(), "rb");
+    FILE* fp;
+    char c[PATH_MAX + 1] = {0x00};
+    errno_t err = strcpy_s(c, PATH_MAX + 1, inputFile->c_str());
+    if (err != EOK) {
+        printf("[SrcEngine] strcpy %s failed!\n", c);
+        return HIAI_ERROR;
+    }
+    char path[PATH_MAX + 1] = {0x00};
+    if (realpath(c, path) == NULL) {
+        printf("[SrcEngine] Get file path failed.\n");
+        return HIAI_ERROR;
+    }
+    printf("[SrcEngine] open file %s...\n", path);
+    fp = fopen(path, "rb");
     if (NULL == fp) {
         printf("[SrcEngine] file open error\n");
         return HIAI_ERROR;
@@ -88,11 +99,9 @@ HIAI_IMPL_ENGINE_PROCESS("SrcEngine", SrcEngine, SRC_INPUT_SIZE)
         fp = NULL;
         return HIAI_ERROR;
     }
-    unsigned char *in_buffer = NULL;
-    ret = hiai::HIAIMemory::HIAI_DMalloc(file_size, (void *&)in_buffer,
-                                         hiai::MALLOC_DEFAULT_TIME_OUT, hiai::HIAI_MEMORY_ATTR_MANUAL_FREE);
-    if (ret != HIAI_OK || in_buffer == NULL) {
-        printf("[SrcEngine] HIAI_DMalloc buffer faild\n");
+    unsigned char* in_buffer = (unsigned char*)Sample_DMalloc(file_size);
+    if (in_buffer == NULL) {
+        printf("[SrcEngine] Sample_DMalloc buffer faild\n");
         fclose(fp);
         fp = NULL;
         return HIAI_ERROR;
@@ -104,7 +113,7 @@ HIAI_IMPL_ENGINE_PROCESS("SrcEngine", SrcEngine, SRC_INPUT_SIZE)
     data_to_send->info = dataConfig;
     data_to_send->info.isEOS = 0;
     data_to_send->buf.bufferSize = read_len;
-    data_to_send->buf.transBuff = std::shared_ptr<uint8_t>(in_buffer, hiai::HIAIMemory::HIAI_DFree);
+    data_to_send->buf.transBuff = std::shared_ptr<uint8_t>(in_buffer, Sample_DFree);
     int hiai_ret = SendData(0, "StreamRawData", std::static_pointer_cast<void>(data_to_send));
     if (hiai_ret != HIAI_OK) {
         printf("[SrcEngine] SendData fail!ret = %d\n", hiai_ret);

@@ -12,7 +12,7 @@ Atlas 300 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
 
 ## 支持的版本
 
-1.3.T33.B890
+1.3.T33.B890 1.3.2.B893 1.31.T12.B120 1.31.T15.B150
 
 版本号查询方法，在Atlas 300产品环境下，运行以下命令：
 ```bash
@@ -31,6 +31,11 @@ npu-smi info
 ./build.sh A500
 ```
 
+备注: 编译脚本build.sh默认运行参数为"A300"，运行以下命令，将默认编译Atlas300程序。
+```bash
+./build.sh 
+```
+
 ## 运行
 查看帮助文档
 ```bash
@@ -39,15 +44,19 @@ cd out
 ```
     -h                         Print a usage message.
     -i  '<path>'               Optional. Specify the image, this sample only support jpeg format.
-                               default: ../data/test.jpeg.
+                               Default: ../data/test.jpeg. 
+                               Resolutions constraint: maximum 8192 x 8192, minimum 32 x 32.
 对图片../data/test.jpeg进行解码和抠图
 ```bash
 cd out
-./main -i=../data/test.jpeg
+./main -i ../data/test.jpeg
 ```
 
-## 结果
+## 约束
 
+支持的分辨率：最大分辨率4096 x 4096，最小分辨率 32 x 32。
+
+## 结果
 
 在out文件夹下输出抠图结果res.yuv文件。
 

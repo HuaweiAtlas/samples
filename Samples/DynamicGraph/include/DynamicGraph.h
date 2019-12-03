@@ -104,7 +104,8 @@ struct engine {
         HOST = static_cast<int>(hiai::EngineConfig_RunSide_HOST)
     };
     engine(){}
-    engine(const string &engineName, uint32_t engineId, uint32_t threadNum, RunSide runSide)
+    engine(const string &engineName, uint32_t engineId, uint32_t threadNum, RunSide runSide): thread_priority(0),
+           wait_inputdata_max_time(0), holdModelFileFlag(0)
     {
         engine_name = engineName;
         id = engineId;
@@ -120,21 +121,22 @@ struct engine {
     uint32_t queue_size = 0;
     AIConfig ai_config;
     vector<string> internal_so_name;
-    uint32_t wait_inputdata_max_time;
-    uint32_t holdModelFileFlag;
-    bool is_repeat_timeout_flag;
+    uint32_t wait_inputdata_max_time ;
+    uint32_t holdModelFileFlag = 0;
+    bool is_repeat_timeout_flag = false;
 };
 
 struct connection {
-    connection(){}
-    connection(uint32_t src_id, uint32_t src_port, uint32_t dst_id, uint32_t dst_port)
+    connection(): src_engine_id(0), src_port_id(0), target_graph_id(0), 
+                  target_engine_id(0), target_port_id(0) {}
+    connection(uint32_t src_id, uint32_t src_port, uint32_t dst_id, uint32_t dst_port):  target_graph_id(0)
     {
         src_engine_id = src_id;
         src_port_id = src_port;
         target_engine_id = dst_id;
         target_port_id = dst_port;
     }
-    connection(const engine &src_engine, uint32_t src_port, const engine &dst_engine, uint32_t dst_port)
+    connection(const engine &src_engine, uint32_t src_port, const engine &dst_engine, uint32_t dst_port):  target_graph_id(0)
     {
         src_engine_id = src_engine.id;
         src_port_id = src_port;
@@ -251,14 +253,14 @@ public:
 private:
     HIAI_StatusT initDevices()
     {
-        HIAI_StatusT ret = HIAI_OK;
+        HIAI_StatusT ret;
         for (auto &g : graphs) {
             ret = HIAI_Init(g.device_id);
             if (ret != HIAI_OK) {
                 return ret;
             }
         }
-        return ret;
+        return HIAI_OK;
     }
     void maintainGraph()
     {

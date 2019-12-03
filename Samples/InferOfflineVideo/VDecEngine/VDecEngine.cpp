@@ -31,133 +31,148 @@
  * ============================================================================
  */
 #include "VDecEngine.h"
-#include "dvpp_utils.h"
-#include "error_code.h"
-#include "hiaiengine/c_graph.h"
-#include "hiaiengine/log.h"
-#include <hiaiengine/status.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include "SampleMemory.h"
+#include <hiaiengine/api.h>
+#include "dvpp/idvppapi.h"
+#include "dvpp/Vpc.h"
 
 typedef struct stat Stat;
 
+const int DVPP_STRIDE_WIDTH = 128;
+const int DVPP_STRIDE_HEIGHT = 16;
+const char H264_FORMAT[] = "h264";
+const char H265_FORMAT[] = "h265";
 
 HIAI_StatusT VDecEngine::Init(const hiai::AIConfig& config, const std::vector<hiai::AIModelDescription>& model_desc)
 {
-    HIAI_ENGINE_LOG(this, HIAI_OK, "[VDecEngine] init start.");
-    if (NULL == pVdecHandle) {
+    HIAI_ENGINE_LOG(HIAI_INFO, "[VDecEngine] init start.");
+    if (pVdecHandle == NULL) {
         int ret = CreateVdecApi(pVdecHandle, 0);
-        if (0 != ret || NULL == pVdecHandle) {
-            HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "pVdecHandle is null.");
+        if (ret != 0 || pVdecHandle == NULL) {
+            HIAI_ENGINE_LOG(HIAI_ERROR, "pVdecHandle is null.");
             return HIAI_ERROR;
         }
     }
-    if (NULL == pDvppHandle) {
+    if (pDvppHandle == NULL) {
         int ret = CreateDvppApi(pDvppHandle);
-        if (0 != ret || NULL == pDvppHandle) {
-            HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "pDvppHandle is null.");
+        if (ret != 0 || pDvppHandle == NULL) {
+            HIAI_ENGINE_LOG(HIAI_ERROR, "pDvppHandle is null.");
         }
     }
-    vdecInMsg.call_back = VDecEngine::frameCallback;
-    HIAI_ENGINE_LOG(this, HIAI_OK, "[VDecEngine] init is finished.");
+    vdecInMsg.call_back = VDecEngine::FrameCallback;
+    HIAI_ENGINE_LOG(HIAI_INFO, "[VDecEngine] init is finished.");
     return HIAI_OK;
 }
 
 VDecEngine::~VDecEngine()
 {
-    if (NULL != pVdecHandle) {
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "destroy dvpp api!");
+    if (pVdecHandle != NULL) {
+        HIAI_ENGINE_LOG(HIAI_ERROR, "destroy dvpp api!");
         DestroyVdecApi(pVdecHandle, 0);
         pVdecHandle = NULL;
     }
-    if (NULL != pDvppHandle) {
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "destroy dvpp api!");
+    if (pDvppHandle != NULL) {
+        HIAI_ENGINE_LOG(HIAI_ERROR, "destroy dvpp api!");
         DestroyDvppApi(pDvppHandle);
         pDvppHandle = NULL;
     }
 }
 
-HIAI_StatusT VDecEngine::Hfbc2YuvOld(FRAME* frame, vpc_in_msg& vpcInMsg)
+HIAI_StatusT VDecEngine::Hfbc2YuvNew(FRAME *frame,  uint8_t *outputBuffer)
 {
-    if (pDvppHandle != NULL) {
-        dvppapi_ctl_msg dvppApiCtlMsg;
-        vpcInMsg.format = 0; //YUV420_SEMI_PLANNAR=0
-        vpcInMsg.rank = 1; //nv12 =0 ,nv21 =1
-        vpcInMsg.bitwidth = frame->bitdepth;
-        vpcInMsg.width = frame->width;
-        vpcInMsg.high = frame->height;
-        // shared_ptr<AutoBuffer> auto_out_buffer = make_shared<AutoBuffer>();
-        vpcInMsg.in_buffer = (char*)frame->buffer;
-        vpcInMsg.in_buffer_size = frame->buffer_size;
-        vpcInMsg.rdma.luma_head_addr = (long)(frame->buffer + frame->offset_head_y);
-        vpcInMsg.rdma.chroma_head_addr = (long)(frame->buffer + frame->offset_head_c);
-        vpcInMsg.rdma.luma_payload_addr = (long)(frame->buffer + frame->offset_payload_y);
-        vpcInMsg.rdma.chroma_payload_addr = (long)(frame->buffer + frame->offset_payload_c);
-        vpcInMsg.rdma.luma_head_stride = frame->stride_head;
-        vpcInMsg.rdma.chroma_head_stride = frame->stride_head;
-        vpcInMsg.rdma.luma_payload_stride = frame->stride_payload;
-        vpcInMsg.rdma.chroma_payload_stride = frame->stride_payload;
-        vpcInMsg.cvdr_or_rdma = 0;
-        vpcInMsg.hmax = frame->realWidth - 1;
-        vpcInMsg.hmin = 0;
-        vpcInMsg.vmax = frame->realHeight - 1;
-        vpcInMsg.vmin = 0;
-        vpcInMsg.vinc = 1;
-        vpcInMsg.hinc = 1;
-        // vpcInMsg.auto_out_buffer_1 = auto_out_buffer;
-        uint32_t widthAligned = ALIGN_UP(frame->realWidth, DVPP_STRIDE_WIDTH);
-        uint32_t heightAligned = ALIGN_UP(frame->realHeight, DVPP_STRIDE_HEIGHT);
-        uint32_t outBufferSize = widthAligned * heightAligned * YUV_BYTES;
-        uint8_t* outBuffer = (uint8_t*)HIAI_DVPP_DMalloc(outBufferSize);
-        if (NULL == outBuffer) {
-            HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[VDecEngine::Hfbc2YuvOld] create outBuffer failed\n");
-            return HIAI_ERROR;
-        }
-        vpcInMsg.out_buffer_1_size = outBufferSize;
-        vpcInMsg.out_buffer = (char*)outBuffer;
-        dvppApiCtlMsg.in = (void*)(&vpcInMsg);
-        dvppApiCtlMsg.in_size = sizeof(vpc_in_msg);
-        if (DvppCtl(pDvppHandle, DVPP_CTL_VPC_PROC, &dvppApiCtlMsg) != 0) {
-            HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[VDecEngine::Hfbc2YuvOld] call dvppctl fail\n");
-            return HIAI_ERROR;
-        }
-    } else {
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[VDecEngine::Hfbc2YuvOld] pDvppHandle is NULL\n");
+    if (pDvppHandle == NULL) {
+        HIAI_ENGINE_LOG(HIAI_ERROR, "[VDecEngine::Hfbc2YuvNew] pDvppHandle is NULL\n");
+        return HIAI_ERROR;
+    }
+    std::shared_ptr<VpcUserImageConfigure> userImage(new VpcUserImageConfigure);
+    userImage->bareDataAddr = nullptr;
+    userImage->bareDataBufferSize = 0;
+    userImage->widthStride = frame->width;
+    userImage->heightStride = frame->height;
+    string imageFormat(frame->image_format);
+    userImage->inputFormat = INPUT_YUV420_SEMI_PLANNER_VU;
+    userImage->outputFormat = OUTPUT_YUV420SP_UV;
+    userImage->isCompressData = true;
+    VpcCompressDataConfigure* compressDataConfigure = &userImage->compressDataConfigure;
+    uintptr_t baseAddr = (uintptr_t)frame->buffer;
+    compressDataConfigure->lumaHeadAddr = baseAddr + frame->offset_head_y;
+    compressDataConfigure->chromaHeadAddr = baseAddr + frame->offset_head_c;
+    compressDataConfigure->lumaPayloadAddr = baseAddr + frame->offset_payload_y;
+    compressDataConfigure->chromaPayloadAddr = baseAddr + frame->offset_payload_c;
+    compressDataConfigure->lumaHeadStride = frame->stride_head;
+    compressDataConfigure->chromaHeadStride = frame->stride_head;
+    compressDataConfigure->lumaPayloadStride = frame->stride_payload;
+    compressDataConfigure->chromaPayloadStride = frame->stride_payload;
+    userImage->yuvSumEnable = false;
+    userImage->cmdListBufferAddr = nullptr;
+    userImage->cmdListBufferSize = 0;
+    std::shared_ptr<VpcUserRoiConfigure> roiConfigure(new VpcUserRoiConfigure);
+    roiConfigure->next = nullptr;
+    userImage->roiConfigure = roiConfigure.get();
+    VpcUserRoiInputConfigure* roiInput = &roiConfigure->inputConfigure;
+    roiInput->cropArea.leftOffset = 0;
+    roiInput->cropArea.rightOffset = (frame->width % 2) ? frame->width : (frame->width - 1);
+    roiInput->cropArea.upOffset = 0;
+    roiInput->cropArea.downOffset = (frame->height % 2) ? frame->height : (frame->height - 1);
+    VpcUserRoiOutputConfigure* roiOutput = &roiConfigure->outputConfigure;
+    roiOutput->outputArea.leftOffset = 0;
+    roiOutput->outputArea.rightOffset = (frame->width % 2) ? frame->width : (frame->width - 1);
+    roiOutput->outputArea.upOffset = 0;
+    roiOutput->outputArea.downOffset = (frame->height % 2) ? frame->height : (frame->height - 1);
+    roiOutput->widthStride = ALIGN_UP(frame->width, DVPP_STRIDE_WIDTH);
+    roiOutput->heightStride = ALIGN_UP(frame->height, DVPP_STRIDE_HEIGHT);
+    roiOutput->bufferSize = roiOutput->widthStride * roiOutput->heightStride * 3 / 2;
+    roiOutput->addr = outputBuffer;
+    roiInput->cropArea = roiConfigure->inputConfigure.cropArea;
+    dvppapi_ctl_msg dvppApiCtlMsg;
+    dvppApiCtlMsg.in = static_cast<void *>(userImage.get());
+    dvppApiCtlMsg.in_size = sizeof(VpcUserImageConfigure);
+    int ret = DvppCtl(pDvppHandle, DVPP_CTL_VPC_PROC, &dvppApiCtlMsg);
+    if (ret != 0) {
+        HIAI_ENGINE_LOG(HIAI_ERROR, "[VDecEngine::Hfbc2YuvNew] call dvppctl fail\n");
+        hiai::HIAIMemory::HIAI_DVPP_DFree(roiOutput->addr);
+        DestroyDvppApi(pDvppHandle);
         return HIAI_ERROR;
     }
     return HIAI_OK;
 }
 
-void VDecEngine::frameCallback(FRAME* frame, void* hiai_data)
+void VDecEngine::FrameCallback(FRAME* frame, void* hiaiData)
 {
 
     VDecEngine* vedcPtr = NULL;
-    if (hiai_data != NULL) {
-        vedcPtr = (VDecEngine*)hiai_data;
+    if (hiaiData != NULL) {
+        vedcPtr = static_cast<VDecEngine*>(hiaiData);
     } else {
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "hiai_data is NULL");
+        HIAI_ENGINE_LOG(HIAI_ERROR, "hiaiData is NULL");
         return;
     }
 
-    vpc_in_msg vpcInMsg;
-    vedcPtr->Hfbc2YuvOld(frame, vpcInMsg);
+    uint8_t *outputBuffer = nullptr;
+    uint32_t widthStride = ALIGN_UP(frame->width, DVPP_STRIDE_WIDTH);
+    uint32_t heightStride = ALIGN_UP(frame->height, DVPP_STRIDE_HEIGHT);
+    uint32_t bufferSize = widthStride * heightStride * 3 / 2;
+
+    HIAI_StatusT ret = hiai::HIAIMemory::HIAI_DVPP_DMalloc(bufferSize, (void *&)outputBuffer);
+
+    // call vpc interface to decompress hfbc
+    vedcPtr->Hfbc2YuvNew(frame, outputBuffer);
     std::shared_ptr<DeviceStreamData> out = std::make_shared<DeviceStreamData>();
     out->info = vedcPtr->inputInfo;
     out->info.frameId = vedcPtr->frameId++;
     out->info.isEOS = 0;
     out->imgOrigin.width = frame->realWidth;
     out->imgOrigin.height = frame->realHeight;
-    out->imgOrigin.heightAligned = frame->height;
     out->imgOrigin.widthAligned = frame->width;
+    out->imgOrigin.heightAligned = frame->height;
 
-    out->imgOrigin.buf.data = std::shared_ptr<uint8_t>((uint8_t*)vpcInMsg.out_buffer, HIAI_DVPP_DFree);
-    out->imgOrigin.buf.len_of_byte = vpcInMsg.out_buffer_1_size;
+    out->imgOrigin.buf.data = std::shared_ptr<uint8_t>((uint8_t*)(outputBuffer), HIAI_DVPP_DFree);
+    out->imgOrigin.buf.len_of_byte = bufferSize;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &vedcPtr->stamps.second);
-    out->info.table["VDecEngine"] = vedcPtr->stamps;
-    HIAI_StatusT ret = vedcPtr->SendData(0, "DeviceStreamData", std::static_pointer_cast<void>(out));
+    ret = vedcPtr->SendData(0, "DeviceStreamData", std::static_pointer_cast<void>(out));
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &vedcPtr->stamps.first);
-    if (HIAI_OK != ret) {
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "VDecEngine senddata failed! ret = %d", ret);
+    if (ret != HIAI_OK) {
+        HIAI_ENGINE_LOG(HIAI_ERROR, "send_data failed! ret = %d", ret);
         return;
     }
 }
@@ -172,24 +187,36 @@ HIAI_IMPL_ENGINE_PROCESS("VDecEngine", VDecEngine, VD_INPUT_SIZE)
     if (inputArg->info.isEOS == 1) {
         vdecInMsg.isEOS = 1;
     } else {
+        int r = -1;
         if (inputArg->info.format == H264) {
-            memcpy_s(vdecInMsg.video_format, 10, "h264", 4);
+            r = memcpy_s(vdecInMsg.video_format, sizeof(vdecInMsg.video_format), H264_FORMAT, sizeof(H264_FORMAT));
+            if (r != 0) {
+                HIAI_ENGINE_LOG(HIAI_ERROR, "[VDecEngine]  memcpy_s video format failed. r = %d", r);
+            }
         } else {
-            memcpy_s(vdecInMsg.video_format, 10, "h265", 4);
+            r = memcpy_s(vdecInMsg.video_format, sizeof(vdecInMsg.video_format), H265_FORMAT, sizeof(H265_FORMAT));
+            if (r != 0) {
+                HIAI_ENGINE_LOG(HIAI_ERROR, "[VDecEngine]  memcpy_s video format failed. r = %d", r);
+            }
         }
         vdecInMsg.in_buffer_size = inputArg->buf.len_of_byte;
-        vdecInMsg.in_buffer = (char*)inputArg->buf.data.get();
+        vdecInMsg.in_buffer = reinterpret_cast<char*>(inputArg->buf.data.get());
         vdecInMsg.isEOS = 0;
-        //        memcpy_s(vdecInMsg.image_format, 10, "nv12", 4);
     }
-    dvppapi_ctl_msg MSG;
-    MSG.in_size = sizeof(vdec_in_msg);
-    MSG.in = (void*)&(vdecInMsg);
-    int ret = VdecCtl(pVdecHandle, DVPP_CTL_VDEC_PROC, &MSG, 0);
+    dvppapi_ctl_msg msg;
+    msg.in_size = sizeof(vdec_in_msg);
+    msg.in = reinterpret_cast<void*>(&vdecInMsg);
+    int ret = VdecCtl(pVdecHandle, DVPP_CTL_VDEC_PROC, &msg, 0);
     if (0 != ret) {
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[VDecEngine] DVPP_CTL_VDEC_PROC failed! ret = %d", ret);
+        HIAI_ENGINE_LOG(HIAI_ERROR, "[VDecEngine] DVPP_CTL_VDEC_PROC failed! ret = %d", ret);
         return HIAI_ERROR;
     }
-
+    if (inputArg->info.isEOS == 1) {
+        std::shared_ptr<DeviceStreamData> eos = std::make_shared<DeviceStreamData>();
+        eos->info.isEOS = 1;
+        SendData(1, "DeviceStreamData", std::static_pointer_cast<void>(eos));
+    }
+    HIAI_ENGINE_LOG(HIAI_INFO, "[VDecEngine] VDecEngine process end!");
     return HIAI_OK;
 }
+

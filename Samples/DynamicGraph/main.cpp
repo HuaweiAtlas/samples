@@ -38,6 +38,8 @@
 #include <libgen.h>
 #include <tuple>
 #include <unistd.h>
+#include "FileManager.h"
+#include "Common.h"
 
 // flag to guard stop signal
 static std::atomic<int> g_flag = { 0 };
@@ -49,7 +51,9 @@ static const uint32_t DEVICE_ID = 0;
 HIAI_StatusT CustomDataRecvInterface::RecvData(const std::shared_ptr<void>& message)
 {
     std::shared_ptr<std::string> data = std::static_pointer_cast<std::string>(message);
-    printf("%s\n", data->c_str());
+    if (data != NULL) {
+        printf("Hello World!\n");
+    }
     g_flag--;
     return HIAI_OK;
 }
@@ -81,16 +85,14 @@ HIAI_StatusT CreateDynamicGraphs(uint32_t num, dg::DynamicGraph& graphs, std::ve
 int main(int argc, char* argv[])
 {
     CommandParser options;
-    options
-        .addOption("-h")
-        .addOption("-g", "1");
+    options.addOption("-h").addOption("-g", "1");
     options.parseArgs(argc, argv);
 
     bool help = options.cmdOptionExists("-h");
     int groups = parseStrToInt(options.cmdGetOption("-g"));
 
-    if (groups <= 0) {
-        printf("option -g should be greater than or equal to 1.\n");
+    if (groups <= 0 || groups > 16) {
+        printf("option -g should be included between 1 to 16.\n");
         showUsage();
         return -1;
     }
@@ -101,17 +103,9 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // chdir to executable path
-    char* dirc = strdup(argv[0]);
-    if (dirc != NULL) {
-        char* dname = ::dirname(dirc);
-        int r = chdir(dname);
-        if (r != 0) {
-            printf("chdir error code %d\n", r);
-            return -1;
-        }
-        free(dirc);
-    }
+    shared_ptr<FileManager> fileManager(new FileManager());
+    string path(argv[0], argv[0] + strlen(argv[0]));
+    fileManager->ChangeDir(path.c_str());
 
     dg::DynamicGraph graphs;
     std::vector<dg::NodeInfo> inputNodes;

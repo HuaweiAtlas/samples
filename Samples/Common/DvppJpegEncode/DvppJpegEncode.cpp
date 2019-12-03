@@ -32,6 +32,7 @@
  */
 #include "DvppJpegEncode.h"
 #include <string.h>
+#include <securec.h>
 
 #define CHECK_ODD(NUM) (((NUM) % 2 != 0) ? (NUM) : ((NUM) - 1))
 #define CHECK_EVEN(NUM) (((NUM) % 2 == 0) ? (NUM) : ((NUM) - 1))
@@ -60,17 +61,20 @@ HIAI_StatusT DvppJpegEncode::Encode(JpegEncodeIn& jpegInData, JpegEncodeOut& enc
     sJpegeOut outData;
     inData.width = CHECK_EVEN(jpegInData.inWidth);
     inData.height = CHECK_EVEN(jpegInData.inHeight);
-    inData.heightAligned = jpegInData.inHeight;
+    inData.heightAligned = jpegInData.alignMethod == 1 ? jpegInData.inHeight : ALIGN_UP(jpegInData.inHeight, ALIGN_16);
     inData.format = jpegInData.format;
     inData.level = jpegInData.level;
-    printf("indata is %d %d %d %x\n", jpegInData.inWidth, jpegInData.inHeight, 
-        jpegInData.inBufferSize, jpegInData.inBufferPtr.get()); 
-    inData.stride = inData.format <= JPGENC_FORMAT_YUYV ? ALIGN_UP(inData.width * NUMBER_2, ALIGN_16) :
-        ALIGN_UP(inData.width, ALIGN_16);
+    if (jpegInData.alignMethod == 1) {
+        inData.stride = inData.format <= JPGENC_FORMAT_YUYV ? ALIGN_UP(inData.width * NUMBER_2, ALIGN_16) :
+            ALIGN_UP(inData.width, ALIGN_16);
+    } else {
+        inData.stride = inData.format <= JPGENC_FORMAT_YUYV ? ALIGN_UP(inData.width * NUMBER_2, ALIGN_128) :
+            ALIGN_UP(inData.width, ALIGN_128);
+    }
     inData.bufSize = inData.format <= JPGENC_FORMAT_YUYV ? 
         ALIGN_UP(inData.stride * inData.heightAligned, PAGE_SIZE) : 
         ALIGN_UP(inData.stride * inData.heightAligned * NUMBER_3 / NUMBER_2, PAGE_SIZE);
-    inData.buf = (unsigned char*)ALIGN_UP((uint64_t)jpegInData.inBufferPtr.get(), ALIGN_128);
+    inData.buf = jpegInData.inBufferPtr.get();
     
     dvppapi_ctl_msg dvppApiCtlMsg;
     dvppApiCtlMsg.in = static_cast<void*>(&inData);

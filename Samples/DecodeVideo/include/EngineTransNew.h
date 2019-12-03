@@ -62,8 +62,8 @@ inline void GetTransSearPtr(void *dataPtr, std::string &structStr, uint8_t *&buf
 * @param [in] : ctrl_ptr �ṹ��ָ��
 * @param [in] : ctrlLen ���ݽṹ�п�����Ϣ��С
 * @param [in] : data_ptr �ṹ������ָ��
-* @param [in] : dataLen �ṹ��������Ϣ�洢�ռ��С��������У�飬����ʾԭʼ������Ϣ��С
-* @param [out]��std::shared_ptr<void> ����Engine��ָ��ṹ��ָ��
+* @param [in] : dataLen �ṹ��������Ϣ�洢�ռ��С��������У�飬����ʾԭʼ������Ϣ���?
+* @param [out]��std::shared_ptr<void> ����Engine��ָ��ṹ��ָ��?
  */
 inline std::shared_ptr<void> GetTransDearPtr(const char *ctrlPtr, const uint32_t &ctrlLen,
                                              const unsigned char *dataPtr, const uint32_t &dataLen)
@@ -73,7 +73,5 @@ inline std::shared_ptr<void> GetTransDearPtr(const char *ctrlPtr, const uint32_t
     engineTransPtr->transBuff.reset(const_cast<unsigned char *>(dataPtr), hiai::Graph::ReleaseDataBuffer);
     return std::static_pointer_cast<void>(engineTransPtr);
 }
-
-// HIAI_REGISTER_SERIALIZE_FUNC("EngineTransNewT", EngineTransNewT, GetTransSearPtr, GetTransDearPtr);
 
 #endif

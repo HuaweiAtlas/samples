@@ -36,12 +36,13 @@
 #include <string>
 using namespace std;
 
-static const char HELP_MESSAGE[] = "Print a usage message.";
-static const char INPUT_MESSAGE[] =
-        "Optional. Specify the image, this sample only support jpeg format. default: ../data/test.jpeg.";
+static const char g_HELP_MESSAGE[] = "Print a usage message.";
+static const char g_INPUT_MESSAGE[] =
+    "Optional. Specify the image, this sample only support jpeg format. default: ../data/test.jpeg."
+    "                               Resolutions constraint: maximum 8192 x 8192, minimum 32 x 32.";
 
-static const string HELP_CMD = "-h";
-static const string INPUT_CMD = "-i";
+static const string g_HELP_CMD = "-h";
+static const string g_INPUT_CMD = "-i";
 /**
  * @brief This function show a help message
  */
@@ -50,7 +51,7 @@ static void ShowUsage()
     printf("\n");
     printf("Options:\n");
     printf("\n");
-    printf("    -h                         %s\n", HELP_MESSAGE);
-    printf("    -i  '<path>'               %s\n", INPUT_MESSAGE);
+    printf("    -h                         %s\n", g_HELP_MESSAGE);
+    printf("    -i  '<path>'               %s\n", g_INPUT_MESSAGE);
 }
 #endif  // COMMAND_LINE_H_

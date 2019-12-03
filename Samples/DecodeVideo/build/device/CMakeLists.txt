@@ -1,6 +1,10 @@
 project(device)
 
-include(${PROJECT_SRC_ROOT}/../CMake/Ascend.cmake)
+if(NOT ${BUILD_TARGET} MATCHES "A200")    
+    include(${PROJECT_SRC_ROOT}/../CMake/Ascend.cmake)
+endif()
+
+add_definitions(-DATLAS_DEVICE)
 
 # copy graph.config file
 file(COPY ${PROJECT_SRC_ROOT}/graph.config

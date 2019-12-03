@@ -1,6 +1,8 @@
 project(device)
 
-include(${PROJECT_SRC_ROOT}/../CMake/Ascend.cmake)
+if(NOT ${BUILD_TARGET} MATCHES "A200")    
+    include(${PROJECT_SRC_ROOT}/../CMake/Ascend.cmake)
+endif()
 
 include_directories(${PROJECT_SRC_ROOT}/../Common/)
 include_directories(${DDK_OPENCV_INCLUDE_DIRS})
@@ -14,7 +16,7 @@ target_link_libraries(VDecEngine ${DDK_DEVICE_LIBRARIES})
 aux_source_directory(${PROJECT_SRC_ROOT}/SSDDetection SSDDetection_SRC)
 add_library(SSDDetection SHARED ${SSDDetection_SRC})
 target_include_directories(SSDDetection PUBLIC ${PROJECT_SRC_ROOT}/SSDDetection)
-target_link_libraries(SSDDetection ${DDK_DEVICE_LIBRARIES} ${DDK_DEVICE_OPENCV_LIBRARYS})
+target_link_libraries(SSDDetection ${DDK_DEVICE_LIBRARIES})
 
 aux_source_directory(${PROJECT_SRC_ROOT}/ObjectClassification ObjectClassification_SRC)
 add_library(ObjectClassification SHARED ${ObjectClassification_SRC})

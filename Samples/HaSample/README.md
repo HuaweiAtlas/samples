@@ -1,4 +1,4 @@
-Chinese|[English](README.md)
+English|[Chinese](README.zh.md)
 # HA
 
 ## Overview

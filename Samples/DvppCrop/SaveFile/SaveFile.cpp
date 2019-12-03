@@ -1,8 +1,8 @@
 /**
  * ============================================================================
  *
- * Copyright (c) Huawei Technologies Co., Ltd. 2018-2019. All rights reserved.
- * Description: Atlas Sample
+ * Copyright (C) 2019, Huawei Technologies Co., Ltd. All Rights Reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -31,17 +31,12 @@
  * ============================================================================
  */
 
-#include <memory>
-#include <fstream>
-#include <sstream>
-#include <stdio.h>
-#include <string.h>
 #include "SaveFile.h"
-#include "hiaiengine/log.h"
-#include "hiaiengine/data_type.h"
-#include "hiaiengine/data_type_reg.h"
-
 using namespace std;
+
+const string RESULT_FOLDER = "result_files/";
+const string FILE_PRE_FIX = "result_";
+
 /**
 * @ingroup hiaiengine
 * @brief HIAI_DEFINE_PROCESS : implementaion of the engine
@@ -55,25 +50,44 @@ HIAI_StatusT SaveFile::Init(const hiai::AIConfig &config,
 
 HIAI_IMPL_ENGINE_PROCESS("SaveFile", SaveFile, INPUT_SIZE)
 {
-    HIAI_ENGINE_LOG(HIAI_INFO, "[SaveFile] start process!");
+    HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[SaveFile] start process!");
+    printf("[SaveFile] start process!\n");
     HIAI_StatusT ret = HIAI_OK;
-    std::shared_ptr<hiai::RawDataBuffer> inputArg = std::static_pointer_cast<hiai::RawDataBuffer>(arg0);
 
-    void *ptr = (void *)(inputArg->data.get());
-    FILE *fp = fopen("./res.yuv", "wb");
+    std::shared_ptr<EngineImageTransT> inputArg = std::static_pointer_cast<EngineImageTransT>(arg0);
+
+    void *ptr = (void *)(inputArg->trans_buff.get());
+
+    if (HIAI_OK != CreateFolder(RESULT_FOLDER, PERMISSION)) {
+        return HIAI_ERROR;
+    }
+
+    string resultFile = RESULT_FOLDER + FILE_PRE_FIX + to_string(getCurentTime()) + "_h_" + to_string(inputArg->height) + "_w_" + to_string(inputArg->width) + ".yuv";
+    char c[PATH_MAX + 1] = { 0x00 };
+    errno_t err = strcpy_s(c, PATH_MAX + 1, resultFile.c_str());
+    if (err != EOK) {
+        printf("[SaveFile] strcpy %s failed!\n", c);
+        return HIAI_ERROR;
+    }
+    char path[PATH_MAX + 1] = { 0x00 };
+    if (realpath(c, path) == NULL) {
+        printf("Begin writing file %s...\n", path);
+    }
+    FILE *fp = fopen(path, "wb");
     if (NULL == fp) {
-        HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[SaveFile] Save file engine: open file fail!");
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[INFO] Save file engine: open file fail!");
         return HIAI_ERROR;
     } else {
-        fwrite(ptr, 1, inputArg->len_of_byte, fp);
+        fwrite(ptr, 1, inputArg->buffer_size, fp);
         fflush(fp);
         fclose(fp);
+        printf("[SaveFile] Save file successfully!\n");
     }
-    printf("[SaveFile] result save success!\n");
 
     std::shared_ptr<std::string> res(new std::string("end"));
     ret = SendData(0, "string", std::static_pointer_cast<void>(res));
-    HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[SaveFile] end process!");
+    HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[info] [SaveFile] end process!");
+    printf("[SaveFile] end process!\n");
     return ret;
 }
 

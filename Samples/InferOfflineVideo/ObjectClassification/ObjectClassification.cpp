@@ -38,14 +38,13 @@
 HIAI_StatusT ObjectClassification::Init(const hiai::AIConfig& config,
     const std::vector<hiai::AIModelDescription>& model_desc)
 {
-    HIAI_StatusT ret = HIAI_OK;
-    if (nullptr == modelManager) {
+    if (modelManager == nullptr) {
         modelManager = std::make_shared<hiai::AIModelManager>();
     }
     hiai::AIModelDescription modelDesc;
     loadModelDescription(config, modelDesc);
     // init ai model manager
-    ret = modelManager->Init(config, { modelDesc });
+    HIAI_StatusT ret = modelManager->Init(config, { modelDesc });
     if (hiai::SUCCESS != ret) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[FaceDetection] ai model manager init failed!");
         return HIAI_ERROR;
@@ -78,12 +77,12 @@ HIAI_StatusT ObjectClassification::Init(const hiai::AIConfig& config,
     kAlignedWidth = ALIGN_UP(kWidth, DVPP_STRIDE_WIDTH);
     kAlignedHeight = ALIGN_UP(kHeight, DVPP_STRIDE_HEIGHT);
     ret = creatIOTensors(modelManager, inputTensorDims, inputTensorVec, inputDataBuffer);
-    if (HIAI_OK != ret) {
+    if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[FaceDetection] creat input tensors failed!");
         return HIAI_ERROR;
     }
     ret = creatIOTensors(modelManager, outputTensorDims, outputTensorVec, outputDataBuffer);
-    if (HIAI_OK != ret) {
+    if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[FaceDetection] creat output tensors failed!");
         return HIAI_ERROR;
     }
@@ -94,15 +93,20 @@ HIAI_StatusT ObjectClassification::Init(const hiai::AIConfig& config,
 void ObjectClassification::GetOutputResult(const std::vector<std::shared_ptr<hiai::IAITensor> >& outputTensorVec,
                                            DetectInfo& detectResult)
 {
-    for (int i = 0; i < outputTensorVec.size(); i++){
+    for (int i = 0; i < outputTensorVec.size(); i++) {
         std::shared_ptr<hiai::AISimpleTensor> result_tensor = std::static_pointer_cast<hiai::AISimpleTensor>(outputTensorVec[i]);
         const int size = result_tensor->GetSize() / (sizeof(float));
         // get the output data
         const float* data_ptr = (const float*) result_tensor->GetBuffer();
-        // gat the index of target label
-        int argmax = std::distance(data_ptr, std::max_element(data_ptr, data_ptr + size));
-        detectResult.classifyResult.classIndex = argmax;
-        detectResult.classifyResult.confidence = data_ptr[argmax];
+        if (data_ptr == NULL) {
+            HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "ObjectClassification. Get result buffer failed!");
+            detectResult.classifyResult.classIndex = -1;
+        } else {
+            // gat the index of target label
+            int argmax = std::distance(data_ptr, std::max_element(data_ptr, data_ptr + size));
+            detectResult.classifyResult.classIndex = argmax;
+            detectResult.classifyResult.confidence = data_ptr[argmax];
+        }
     }
 
 }
@@ -121,26 +125,31 @@ HIAI_IMPL_ENGINE_PROCESS("ObjectClassification", ObjectClassification, CLASSIFIC
 
 
         for (auto& det : inputArg->detectResult) {
-             std::vector<DetectInfo> rect;
-             rect.push_back(det);
+            std::vector<DetectInfo> rect;
+            rect.push_back(det);
             // crop and resize image by vpc
-             vpcCropResize(inputArg->imgOrigin.buf.data.get(), inputArg->imgOrigin.width, inputArg->imgOrigin.height,
-             dataBufferPtr, kWidth, kHeight, rect, INPUT_YUV420_SEMI_PLANNER_UV);
+            vpcCropResize(inputArg->imgOrigin.buf.data.get(), inputArg->imgOrigin.width, inputArg->imgOrigin.height,
+            dataBufferPtr, kWidth, kHeight, rect, INPUT_YUV420_SEMI_PLANNER_UV);
 
-             hiai::AIContext aiContext;
-             ret = modelManager->Process(aiContext, inputTensorVec, outputTensorVec, 0);
-             if (hiai::SUCCESS != ret) {
-                  HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "AI Model Manager Process failed");
-                  return HIAI_ERROR;
-             }
+            hiai::AIContext aiContext;
+            ret = modelManager->Process(aiContext, inputTensorVec, outputTensorVec, 0);
+            if (hiai::SUCCESS != ret) {
+                HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "AI Model Manager Process failed");
+                return HIAI_ERROR;
+            }
 
              //vector<OutputT> outputDataVec;
              //vector<ClassifyResultT> classifyResult;
-             GetOutputResult(outputTensorVec,det);
-         }
+            GetOutputResult(outputTensorVec, det);
+        }
 
-        //  inputArg->classifyResult = classifyResult;
         SendData(0, "DeviceStreamData", arg0);
     }
     return HIAI_OK;
 }
+
+ObjectClassification::~ObjectClassification()
+{
+
+}
+

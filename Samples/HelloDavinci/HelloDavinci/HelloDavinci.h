@@ -31,8 +31,8 @@
  * ============================================================================
  */
 
-#ifndef HelloDavinci_ENGINE_H
-#define HelloDavinci_ENGINE_H
+#ifndef HELLODAVINCI_ENGINE_H
+#define HELLODAVINCI_ENGINE_H
 #include <vector>
 #include <string>
 #include "hiaiengine/engine.h"

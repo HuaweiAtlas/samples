@@ -39,14 +39,12 @@
 #include "hiaiengine/api.h"
 #include "hiaiengine/engine.h"
 #include "hiaiengine/data_type.h"
-#include "TransSear.h"
 #include "DvppJpegEncode.h"
 #include "Common.h"
 
 #define JC_INPUT_SIZE 1
 #define JC_OUTPUT_SIZE 1
 
-//HIAI_REGISTER_SERIALIZE_FUNC("YUVImageDataT", YUVImageDataT, GetTransSearPtr, GetTransDearPtr);
 
 class JpegEncode : public hiai::Engine {
 public:

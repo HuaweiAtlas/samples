@@ -42,7 +42,7 @@ set(_DDK_ROOT_PATHS PATHS $ENV{DDK_HOME} NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_ENV
 
 #
 set(_DDK_HOST_LIB_PATHS ${_DDK_ROOT_PATHS})
-if(${CMAKE_BUILD_TARGET} MATCHES "A500")
+if(${BUILD_TARGET} MATCHES "A500")
     set(_DDK_HOST_PATH_SUFFIXES "lib64")
 else()
     set(_DDK_HOST_PATH_SUFFIXES "host/lib")
@@ -81,10 +81,15 @@ if(NOT DDK_FOUND)
     find_ddk_host_lib(DDK_DRVDEVDRV_LIBRARY drvdevdrv)
     find_ddk_host_lib(DDK_DRVHDC_HOST_LIBRARY drvhdc_host)
     find_ddk_host_lib(DDK_MMPA_LIBRARY mmpa)
-    find_ddk_host_lib(DDK_MEMORY_LIBRARY memory)
-    find_ddk_host_lib(DDK_MATRIX_LIBRARY matrix)
+    find_ddk_host_lib(DDK_MEMORY_LIBRARY memory)    
     find_ddk_host_lib(DDK_PROFILERCLIENT_LIBRARY profilerclient)
     find_ddk_host_lib(DDK_SLOG_LIBRARY slog)
+
+    if(${BUILD_TARGET} MATCHES "A200")
+        find_ddk_host_lib(DDK_MATRIX_LIBRARY matrixdaemon)
+    else()
+        find_ddk_host_lib(DDK_MATRIX_LIBRARY matrix)
+    endif()
 
     set(DDK_HOST_LIBRARIES 
         ${DDK_DRVDEVDRV_LIBRARY} 
@@ -105,14 +110,29 @@ if(NOT DDK_FOUND)
     find_ddk_device_lib(DDK_DVPP_JEPG_E_LIBRARY Dvpp_jpeg_encoder)
     find_ddk_device_lib(DDK_DVPP_PNG_D_LIBRARY Dvpp_png_decoder)
     find_ddk_device_lib(DDK_DVPP_VPC_LIBRARY Dvpp_vpc)
+    if(${BUILD_TARGET} MATCHES "A200")
+        find_ddk_device_lib(DDK_HIAI_COMMON_LIBRARY hiai_common)
+        find_ddk_device_lib(DDK_HIAI_SERVER_LIBRARY hiai_server)
+        find_ddk_device_lib(DDK_HIAI_CLIENT_LIBRARY hiai_client)
+        find_ddk_device_lib(DDK_MEDIA_MINI_LIBRARY media_mini)
+        find_ddk_device_lib(DDK_FMK_COMMON fmk_common)
+        find_ddk_device_lib(DDK_MATRIX_DAEMON_LIBRARY matrixdaemon)
+        find_ddk_device_lib(DDK_DEVICE_CSEC c_sec)
+        set(DDK_ATLAS200_EXTRA_LIBRARY 
+            ${DDK_HIAI_COMMON_LIBRARY}
+            ${DDK_HIAI_SERVER_LIBRARY}
+            ${DDK_HIAI_CLIENT_LIBRARY}
+            ${DDK_MEDIA_MINI_LIBRARY}
+            ${DDK_FMK_COMMON}
+            ${DDK_MATRIX_DAEMON_LIBRARY}
+            ${DDK_DEVICE_CSEC})
+    endif()
     set(DDK_DVPP_LIBRARYS 
         ${DDK_DVPP_API_LIBRARY} 
         ${DDK_DVPP_JPEG_D_LIBRARY} 
         ${DDK_DVPP_JEPG_E_LIBRARY} 
         ${DDK_DVPP_PNG_D_LIBRARY} 
         ${DDK_DVPP_VPC_LIBRARY})
-
-    set(DDK_DEVICE_LIBRARIES ${DDK_IDEDAEMON_LIBRARY} ${DDK_DVPP_LIBRARYS})
 
     #third_party
     set(_DDK_THIRD_INC_DIR $ENV{DDK_HOME}/include/third_party)
@@ -121,12 +141,12 @@ if(NOT DDK_FOUND)
     set(DDK_CEREAL_INCLUDE_DIRS ${_DDK_THIRD_INC_DIR}/cereal/include)
 
     #glog
-    set(DDK_GLOG_INCLUDE_DIR ${_DDK_THIRD_INC_DIR}/glog/include)
-    find_ddk_host_lib(DDK_GLOG_LIBRARYS glog)
+    #set(DDK_GLOG_INCLUDE_DIR ${_DDK_THIRD_INC_DIR}/glog/include)
+    #find_ddk_host_lib(DDK_GLOG_LIBRARYS glog)
 
     #gflags
-    set(DDK_GFLAGS_INCLUDE_DIRS ${_DDK_THIRD_INC_DIR}/gflags/include)
-    find_ddk_host_lib(DDK_GFLAGS_LIBRARYS gflags)
+    #set(DDK_GFLAGS_INCLUDE_DIRS ${_DDK_THIRD_INC_DIR}/gflags/include)
+    #find_ddk_host_lib(DDK_GFLAGS_LIBRARYS gflags)
 
     #openssl
     find_ddk_host_lib(DDK_OPENSSL_SSL_LIBRARY ssl)
@@ -140,23 +160,24 @@ if(NOT DDK_FOUND)
     #opencv
     set(DDK_OPENCV_INCLUDE_DIRS ${_DDK_THIRD_INC_DIR}/opencv/include)
     find_ddk_host_lib(DDK_HOST_OPENCV_LIBRARYS opencv_world)
-    # set(DDK_HOST_OPENCV_LIBRARYS ${DDK_OPENCV_LIBRARYS})
     find_ddk_device_lib(DDK_DEVICE_OPENCV_LIBRARYS opencv_world)
-    if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
-        set(OpenCV_LIBS ${DDK_DEVICE_OPENCV_LIBRARYS})
-        set(DDK_OPENCV_LIBRARYS ${DDK_DEVICE_OPENCV_LIBRARYS})
-        set(DDK_HOST_LIBRARIES ${DDK_HOST_LIBRARIES} ${DDK_PROTOBUF_LIBRARYS} ${DDK_OPENSSL_LIBRARYS})  
-    else()
-        set(OpenCV_LIBS ${DDK_HOST_OPENCV_LIBRARYS})
-        set(DDK_OPENCV_LIBRARYS ${DDK_HOST_OPENCV_LIBRARYS})
-    endif()
+
     #
     set(DDK_THIRD_LIBRARYS 
         ${DDK_GLOG_LIBRARYS} 
         ${DDK_GFLAGS_LIBRARYS}
         ${DDK_PROTOBUF_LIBRARYS} 
         ${DDK_OPENCV_LIBRARYS})
-    
+
+    if(${BUILD_TARGET} MATCHES "A200")
+        set(DDK_DEVICE_LIBRARIES ${DDK_IDEDAEMON_LIBRARY} ${DDK_DVPP_LIBRARYS} ${DDK_ATLAS200_EXTRA_LIBRARY})
+    elseif(${BUILD_TARGET} MATCHES "A500")
+        set(DDK_HOST_LIBRARIES ${DDK_HOST_LIBRARIES} ${DDK_PROTOBUF_LIBRARYS})
+        set(DDK_DEVICE_LIBRARIES ${DDK_IDEDAEMON_LIBRARY} ${DDK_DVPP_LIBRARYS})
+    else()
+        set(DDK_DEVICE_LIBRARIES ${DDK_IDEDAEMON_LIBRARY} ${DDK_DVPP_LIBRARYS})
+    endif()
+
     #
     set(DDK_FOUND TRUE)
 endif(NOT DDK_FOUND)

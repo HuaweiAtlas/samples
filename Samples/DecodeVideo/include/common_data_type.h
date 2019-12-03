@@ -80,8 +80,8 @@ inline void GetStreamRawDataSearPtr(void *dataPtr, std::string &structStr, uint8
 * @param [in] : ctrl_ptr �ṹ��ָ��
 * @param [in] : ctrlLen ���ݽṹ�п�����Ϣ��С
 * @param [in] : data_ptr �ṹ������ָ��
-* @param [in] : dataLen �ṹ��������Ϣ�洢�ռ��С��������У�飬����ʾԭʼ������Ϣ��С
-* @param [out]��std::shared_ptr<void> ����Engine��ָ��ṹ��ָ��
+* @param [in] : dataLen �ṹ��������Ϣ�洢�ռ��С��������У�飬����ʾԭʼ������Ϣ���?
+* @param [out]��std::shared_ptr<void> ����Engine��ָ��ṹ��ָ��?
  */
 inline std::shared_ptr<void> GetStreamRawDataDearPtr(const char *ctrlPtr, const uint32_t &ctrlLen,
                                                      const unsigned char *dataPtr, const uint32_t &dataLen)
@@ -98,8 +98,6 @@ inline std::shared_ptr<void> GetStreamRawDataDearPtr(const char *ctrlPtr, const 
     engineTransPtr->info.height = ((StreamRawData *)ctrlPtr)->info.height;
     return std::static_pointer_cast<void>(engineTransPtr);
 }
-
-// HIAI_REGISTER_SERIALIZE_FUNC("StreamRawData", StreamRawData, GetStreamRawDataSearPtr, GetStreamRawDataDearPtr);
 
 #else
 

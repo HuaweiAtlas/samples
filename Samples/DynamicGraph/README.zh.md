@@ -15,7 +15,7 @@ Atlas 300 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
 
 ## 支持的版本
 
-1.3.T33.B890
+1.3.T33.B890 1.3.2.B893 1.31.T12.B120 1.31.T15.B150
 
 版本号查询方法，在Atlas产品环境下，运行以下命令：
 ```bash
@@ -34,6 +34,11 @@ npu-smi info
 ./build.sh A500
 ```
 
+备注: 编译脚本build.sh默认运行参数为"A300"，运行以下命令，将默认编译Atlas300程序。
+```bash
+./build.sh 
+```
+
 ## 运行
 
 ```bash
@@ -42,7 +47,7 @@ cd out
 Usage: main [Options...]
 Options:
     -h                             show usage message.
-    -g                             graph count per chip, default is 1
+    -g                             graph count per chip, default is 1, should be in [1, 16]
 Eg:
     ./main -g 2
 
@@ -53,4 +58,4 @@ hello world
 
 ## 注意事项
 
-无
+- `-g` 参数只接收 1~16 的整数。 

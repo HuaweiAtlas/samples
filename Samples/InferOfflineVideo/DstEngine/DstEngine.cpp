@@ -33,28 +33,30 @@
 
 #include "DstEngine.h"
 #include <sys/stat.h>
+#include <securec.h>
 
-uint32_t OUT_PATH_MAX = 128;
 using Stat = struct stat;
 
 const string RESULT_FOLDER = "result_files/";
 const string FILE_PRE_FIX = "result_";
 const int MAX_CHAR_LENGTH = 256;
+const uint32_t OUT_PATH_MAX = 128;
 
 // create directory
 void MkdirP(const std::string& outdir)
 {
     Stat st;
     if (stat(outdir.c_str(), &st) != 0) {
-        int dir_err = mkdir(outdir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-        if (dir_err == -1) {
+        int dirErr = mkdir(outdir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        if (dirErr == -1) {
             printf("Error creating directory!\n");
             exit(1);
         }
     }
 }
 
-HIAI_StatusT DstEngine::Init(const hiai::AIConfig& config, const std::vector<hiai::AIModelDescription>& model_desc) {
+HIAI_StatusT DstEngine::Init(const hiai::AIConfig& config, const std::vector<hiai::AIModelDescription>& model_desc) 
+{
     auto aimap = kvmap(config);
     if (aimap.count("labelPath")) {
         labelPath = aimap["labelPath"];
@@ -67,8 +69,18 @@ HIAI_StatusT DstEngine::Init(const hiai::AIConfig& config, const std::vector<hia
 HIAI_StatusT DstEngine::SaveJpg(const std::string& resultFileJpg, const std::shared_ptr<DeviceStreamData>& inputArg)
 {
     void *ptr = (void *)(inputArg->imgOrigin.buf.data.get());
+    char c[PATH_MAX + 1] = {0x00};
+    errno_t err = strcpy_s(c, PATH_MAX + 1, resultFileJpg.c_str());
+    if (err != EOK) {
+        printf("[ERROR] strcpy %s failed!\n", c);
+        return HIAI_ERROR;
+    }
 
-    FILE *fp = fopen(resultFileJpg.c_str(), "wb");
+    char path[PATH_MAX + 1] = {0x00};
+    if (realpath(c, path) == NULL) {
+        printf("Begin writing file %s...\n", path);
+    }
+    FILE *fp = fopen(path, "wb");
     if (NULL == fp) {
         HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[SaveFile] Save file engine: open file fail!");
         return HIAI_ERROR;
@@ -94,7 +106,7 @@ HIAI_StatusT DstEngine::ProcessResult(const std::string& resultFileTxt, const st
 
     printf("[DstEngine]: The process result of frame %lu:\n", inputArg->info.frameId);
     // save the detection result
-    int i=0;
+    int i = 0;
     for (const auto& det : inputArg->detectResult) {
         // get the output data
         // gat the index of target label
@@ -102,14 +114,14 @@ HIAI_StatusT DstEngine::ProcessResult(const std::string& resultFileTxt, const st
         float score = det.classifyResult.confidence;
         std::string s;
         s.reserve(MAX_CHAR_LENGTH);
-        for (int i = 0; i < argmax; ++i){
+        for (int i = 0; i < argmax; ++i) {
                 std::getline(in, s);
         }
         std::getline(in, s);
         printf("detect object %d: \n", i++);
         printf("classname: %s score: %f\n", s.c_str(), score);
 
-        if (tfile.is_open()){
+        if (tfile.is_open()) {
             tfile << s  << " score: " << score << endl;
         }else {
             HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "video_output: failed to open txt result file.");
@@ -141,11 +153,11 @@ HIAI_IMPL_ENGINE_PROCESS("DstEngine", DstEngine, DST_INPUT_SIZE)
     auto inputArg = std::static_pointer_cast<DeviceStreamData>(arg0);
 
     // if it is the end of stream, send end signal to main
-   if(inputArg->info.isEOS){
+    if (inputArg->info.isEOS){
         std::shared_ptr<std::string> result_data(new std::string);
         hiai::Engine::SendData(0, "string", std::static_pointer_cast<void>(result_data));
         return HIAI_OK;
-   }
+    }
 
    // create directory for saving result info
     MkdirP(RESULT_FOLDER);
@@ -154,13 +166,13 @@ HIAI_IMPL_ENGINE_PROCESS("DstEngine", DstEngine, DST_INPUT_SIZE)
     string resultFileJpg = resultFile + ".jpg";
 
     // save the result information in file named resultFileTxt
-    if(ProcessResult(resultFileTxt, inputArg) != HIAI_OK){
+    if (ProcessResult(resultFileTxt, inputArg) != HIAI_OK){
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[DstEngine]  process result failed");
         return HIAI_ERROR;
     }
 
     // save the result jpg file named resultFileJpg
-    if(SaveJpg(resultFileJpg,inputArg) != HIAI_OK){
+    if (SaveJpg(resultFileJpg, inputArg) != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[DstEngine]  save jpg file failed");
         return HIAI_ERROR;
     }

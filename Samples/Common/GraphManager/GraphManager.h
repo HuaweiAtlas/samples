@@ -54,7 +54,8 @@ public:
     {
 
     }
-
+     
+    ~GraphManager();
     /**
      * @brief StartGraph, start graph
      * @return : HIAI_StatusT, HIAI_OK: success, HIAI_ERROR: fail

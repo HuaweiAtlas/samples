@@ -47,8 +47,8 @@
 
 using namespace std;
 
-#define CHECK_ODD(NUM)  (((NUM) % 2 != 0) ? (NUM) : (NUM - 1))
-#define CHECK_EVEN(NUM) (((NUM) % 2 == 0) ? (NUM) : (NUM - 1))
+#define CHECK_ODD(NUM)  ((((NUM) % (2)) != (0)) ? (NUM) : ((NUM) - (1)))
+#define CHECK_EVEN(NUM) ((((NUM) % (2)) == (0)) ? (NUM) : ((NUM) - (1)))
 
 /* Aligned length in C30. it would be 128*16 in C10. */
 static const int WIDTH_ALIGNED = 16;
@@ -85,6 +85,16 @@ typedef struct DecodeOutputImage {
     unsigned char *inBuffer; /* output image buffer. */
     uint32_t inBufferSize; /* output image buffer size. */
 } DecodeOutputImageT;
+
+/* struct of CropResizeOutputImage image. */
+typedef struct CropResizeOutputImage {
+    uint32_t imgWidth; /* the width of output image. */
+    uint32_t imgHeight; /* the height og output image. */
+    uint32_t imgWidthAligned; /* the aligned with. */
+    uint32_t imgHeightAligned; /* the aligned height. */
+    unsigned char *outBuffer; /* output image buffer. */
+    uint32_t outBufferSize; /* output image buffer size. */
+} CropResizeOutputImage;
 
 /* the param of crop and resize image. */
 typedef struct CropResizePara {
@@ -134,6 +144,17 @@ public:
                                  uint8_t *outBuffer, const uint32_t outBufferSize);
 
     /**
+     * @brief crop or resize image
+     * @param [in] : decodeOutputImage, the decode output, the crop or resize input
+     * @param [in] : cropResizePara, the param of crop or resize
+     * @param [in] : CropResizeOutputImage, CropResizeOuput
+     * @return : HIAI_StatusT, HIAI_OK: success
+    */
+    HIAI_StatusT CropResizeImage(const std::shared_ptr<DecodeOutputImage> decodeOutputImage,
+                                 const CropResizePara cropResizePara,
+                                 std::shared_ptr<CropResizeOutputImage> cropResizeOutputImage);
+
+    /**
      * @brief get mul crop or resize area according to the specify rol number or col number. It is only used for testing
      * @param [in] : outWidth, the width of image
      * @param [in] : outHeight, the height of image
@@ -141,7 +162,7 @@ public:
      * @param [in] : colNum
      * @return : vector<CropArea>, the array of crop resize. the size is equal to rolNum*colNum
      */
-    vector<CropArea> getMulCropArea(uint32_t outWidth, uint32_t outHeight, uint32_t rolNum, uint32_t colNum);
+    vector<CropArea> GetMulCropArea(uint32_t outWidth, uint32_t outHeight, uint32_t rolNum, uint32_t colNum);
 
     /**
      * @brief get one crop or reszie area according to image width and image height. It is only used for testing
@@ -149,7 +170,7 @@ public:
      * @param [in] : outHeight, the height of image
      * @return : vector<CropArea>, the array of crop resize. the size is equal to 1
      */
-    vector<CropArea> getSingleArea(uint32_t outWidth, uint32_t outHeight);
+    vector<CropArea> GetSingleArea(uint32_t outWidth, uint32_t outHeight);
 
     /**
      * @brief get one resize area according to image width and image height. It is only used for testing
@@ -157,7 +178,7 @@ public:
      * @param [in] : outHeight, the height of image
      * @return : vector<CropArea>, the array of crop resize. the size is equal to 1
      */
-    vector<CropArea> getResizeArea(uint32_t outWidth, uint32_t outHeight);
+    vector<CropArea> GetResizeArea(uint32_t outWidth, uint32_t outHeight);
 
     /**
      * @brief get one crop area according to image width and image height. It is only used for testing
@@ -165,7 +186,7 @@ public:
      * @param [in] : outHeight, the height of image
      * @return : vector<CropArea>, the array of crop resize. the size is equal to 1
      */
-    vector<CropArea> getCropArea(uint32_t outWidth, uint32_t outHeight);
+    vector<CropArea> GetCropArea(uint32_t outWidth, uint32_t outHeight);
 
     /**
      * @brief calculate the buffer size of yuv output, according to resize scale
@@ -174,7 +195,7 @@ public:
      * @param [in] : resizeFactorH, the resize scale of height
      * @return : uint32_t, the yuv buffer size
      */
-    uint32_t getYuvOutputBufferSize(const std::shared_ptr<DecodeOutputImage> decodeOutputImage,
+    uint32_t GetYuvOutputBufferSize(const std::shared_ptr<DecodeOutputImage> decodeOutputImage,
                                     const float resizeFactorW, const float resizeFactorH);
 
     ~CropResize();
@@ -190,6 +211,11 @@ private:
     void ConstructRoiOutputConfigure(const std::shared_ptr<DecodeOutputImage> decodeOutputImage,
                                      VpcUserRoiOutputConfigure *&outputConfigure,
                                      const CropResizePara cropResizePara, uint8_t *outBuffer, const uint32_t outBufferSize);
+
+    void ConstructRoiOutputConfigure(const std::shared_ptr<DecodeOutputImage> decodeOutputImage,
+                                     VpcUserRoiOutputConfigure *&outputConfigure,
+                                     const CropResizePara cropResizePara,
+                                     std::shared_ptr<CropResizeOutputImage> cropResizeOutputImage);
 
     // Private implementation a member variable, which is used to cache the input queue
     // hiai::MultiTypeQueue input_que_;

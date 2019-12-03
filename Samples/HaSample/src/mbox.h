@@ -1,11 +1,12 @@
 /******************************************************************************
 
-                  版权所有 (C),  华为技术有限公司
+                  版权所有 (c) 华为技术有限公司 2012-2018
 
  ******************************************************************************
+
   文 件 名   : mbox.h
   版 本 号   : 1.0
-  作    者   : 
+  作    者   :
   生成日期   : 2019.08.06
   最近修改   : create file
   功能描述   : 容器邮箱功能
@@ -27,27 +28,26 @@ using namespace std;
 
 #ifdef __cplusplus
 #if __cplusplus
-extern "C"{
+extern "C" {
 #endif
 #endif /* __cplusplus */
 
-#define MBOX_SERVER_UP_CHAN    "up"
-#define MBOX_SERVER_DOWN_CHAN  "down"
-#define MBOX_SERVER_PATH    "/var/log/docker/ha-mailbox"
+#define MBOX_SERVER_UP_CHAN "up"
+#define MBOX_SERVER_DOWN_CHAN "down"
+#define MBOX_SERVER_PATH "/var/log/docker/ha-mailbox"
 
-#define MBOX_WATCH_EVENT_MASK   (IN_CLOSE_WRITE)
-#define MBOX_PATH_MAX_SIZE  512
+#define MBOX_WATCH_EVENT_MASK (IN_CLOSE_WRITE)
+#define MBOX_PATH_MAX_SIZE 512
 
-#define MBOX_LOCK_WAIT_INTERVAL 100             /* 100us */
-#define MBOX_LOCK_WAIT_TMOUT    (10 * MBOX_LOCK_WAIT_INTERVAL)  /* 1ms */
+#define MBOX_LOCK_WAIT_INTERVAL 100                         /* 100us */
+#define MBOX_LOCK_WAIT_TMOUT (10 * MBOX_LOCK_WAIT_INTERVAL) /* 1ms */
 
-#define MBOX_MSG_MAX_SIZE   512    /* mailbox message size */
-#define MBOX_READ_EVENT_MAX      32
+#define MBOX_MSG_MAX_SIZE 512 /* mailbox message size */
+#define MBOX_READ_EVENT_MAX 32
 
 #ifndef unlikely
-#define unlikely(x)       __builtin_expect((x), 0)
+#define unlikely(x) __builtin_expect((x), 0)
 #endif
-
 
 int mbox_get_inotify_fd(void);
 char *mbox_find_watch_docker(int wd);
@@ -60,7 +60,6 @@ struct inotify_event *mbox_get_event(struct inotify_event *event, unsigned int *
 int mbox_client_request(const char *request, unsigned int size);
 int mbox_client_watch(const char *watch_file);
 
-
 #ifdef __cplusplus
 #if __cplusplus
 }
@@ -68,5 +67,3 @@ int mbox_client_watch(const char *watch_file);
 #endif /* __cplusplus */
 
 #endif
-
-

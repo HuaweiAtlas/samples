@@ -38,7 +38,6 @@
 #include "hiaiengine/c_graph.h"
 #include "hiaiengine/data_type.h"
 #include "hiaiengine/log.h"
-#include "opencv2/opencv.hpp"
 #include <memory>
 
 using std::map;
@@ -46,18 +45,17 @@ using std::shared_ptr;
 using std::string;
 using std::vector;
 
-HIAI_StatusT SSDDetection::Init(const hiai::AIConfig& config,
-    const std::vector<hiai::AIModelDescription>& model_desc)
+HIAI_StatusT SSDDetection::Init(const hiai::AIConfig &config,
+                                const std::vector<hiai::AIModelDescription> &model_desc)
 {
     HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[SSDDetection] start init!");
-    HIAI_StatusT ret = HIAI_OK;
-    if (nullptr == modelManager) {
+    if (modelManager == nullptr) {
         modelManager = std::make_shared<hiai::AIModelManager>();
     }
     hiai::AIModelDescription modelDesc;
     loadModelDescription(config, modelDesc);
     // init ai model manager
-    ret = modelManager->Init(config, { modelDesc });
+    HIAI_StatusT ret = modelManager->Init(config, { modelDesc });
     if (hiai::SUCCESS != ret) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[SSDDetection] ai model manager init failed!");
         return HIAI_ERROR;
@@ -70,16 +68,16 @@ HIAI_StatusT SSDDetection::Init(const hiai::AIConfig& config,
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[SSDDetection] hiai ai model manager init failed.");
         return HIAI_ERROR;
     }
-    for (auto& dims : inputTensorDims) {
+    for (auto &dims : inputTensorDims) {
         logDumpDims(dims);
     }
-    for (auto& dims : outputTensorDims) {
+    for (auto &dims : outputTensorDims) {
         logDumpDims(dims);
     }
     // input dims
     if (1 != inputTensorDims.size()) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[SSDDetection] inputTensorDims.size() != 1 (%d vs. %d)",
-            inputTensorDims.size(), 1);
+                        inputTensorDims.size(), 1);
         return HIAI_ERROR;
     }
 
@@ -91,12 +89,12 @@ HIAI_StatusT SSDDetection::Init(const hiai::AIConfig& config,
     kAlignedWidth = ALIGN_UP(kWidth, DVPP_STRIDE_WIDTH);
     kAlignedHeight = ALIGN_UP(kHeight, DVPP_STRIDE_HEIGHT);
     ret = creatIOTensors(modelManager, inputTensorDims, inputTensorVec, inputDataBuffer);
-    if (HIAI_OK != ret) {
+    if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[SSDDetection] creat input tensors failed!");
         return HIAI_ERROR;
     }
     ret = creatIOTensors(modelManager, outputTensorDims, outputTensorVec, outputDataBuffer);
-    if (HIAI_OK != ret) {
+    if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[SSDDetection] creat output tensors failed!");
         return HIAI_ERROR;
     }
@@ -117,17 +115,17 @@ HIAI_IMPL_ENGINE_PROCESS("SSDDetection", SSDDetection, DT_INPUT_SIZE)
     // waiting for batch data
     if (inputArgQueue.size() < kBatchSize) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR,
-            "Collecting batch data, in queue, current size %d", inputArgQueue.size());
+                        "Collecting batch data, in queue, current size %d", inputArgQueue.size());
         return HIAI_OK;
     }
     // resize yuv data to input size
-    uint8_t* dataBufferPtr = inputDataBuffer[0].get();
+    uint8_t *dataBufferPtr = inputDataBuffer[0].get();
     for (int i = 0; i < inputArgQueue.size(); i++) {
         inputArg = inputArgQueue[i];
         char outFilename[128];
         time_pair vpcStamps;
         vpcResize(inputArg->imgOrigin.buf.data.get(), inputArg->imgOrigin.width, inputArg->imgOrigin.height,
-            dataBufferPtr, kWidth, kHeight);
+                  dataBufferPtr, kWidth, kHeight);
         dataBufferPtr += kInputSize;
     }
     // inference
@@ -150,13 +148,24 @@ HIAI_StatusT SSDDetection::postProcessDetection()
     // tensor shape 200x7x1x1
     // for each row (7 elements), layout as follows
     // batch, label, score, xmin, ymin, xmax, ymax
-    shared_ptr<hiai::AINeuralNetworkBuffer> tensorResults = std::static_pointer_cast<hiai::AINeuralNetworkBuffer>(outputTensorVec[0]);
-    shared_ptr<hiai::AINeuralNetworkBuffer> tensorObjNum = std::static_pointer_cast<hiai::AINeuralNetworkBuffer>(outputTensorVec[1]);
-    int objNum = (int)(*(float*)tensorObjNum->GetBuffer());
+    shared_ptr<hiai::AINeuralNetworkBuffer> tensorResults = std::static_pointer_cast<hiai::AINeuralNetworkBuffer>
+                                                            (outputTensorVec[0]);
+    shared_ptr<hiai::AINeuralNetworkBuffer> tensorObjNum = std::static_pointer_cast<hiai::AINeuralNetworkBuffer>
+                                                           (outputTensorVec[1]);
+    float *objNumFloat = (float *)tensorObjNum->GetBuffer();
+    if (objNumFloat == NULL) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Get AINeuralNetworkBuffer data failed");
+        return HIAI_ERROR;
+    }
+    int objNum = (int)(*objNumFloat);
     const float thresh = 0.5;
     const int colSize = 7;
     int validFaceCount = 0;
-    float* resPtr = (float*)tensorResults->GetBuffer();
+    float *resPtr = (float *)tensorResults->GetBuffer();
+    if (resPtr == NULL) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Get AINeuralNetworkBuffer data failed");
+        return HIAI_ERROR;
+    }
     for (int i = 0; i < objNum; i++) {
         float score = *(resPtr + 2);
         if (score > thresh) {
@@ -168,7 +177,7 @@ HIAI_StatusT SSDDetection::postProcessDetection()
             float ymax = *(resPtr + 6);
             validFaceCount++;
             // batch, label, score, xmin, ymin, xmax, ymax);
-            shared_ptr<DeviceStreamData>* streamPtr = &inputArgQueue[batch];
+            shared_ptr<DeviceStreamData> *streamPtr = &inputArgQueue[batch];
             const uint32_t img_width = (*streamPtr)->imgOrigin.width;
             const uint32_t img_height = (*streamPtr)->imgOrigin.height;
             DetectInfo info;
@@ -182,12 +191,16 @@ HIAI_StatusT SSDDetection::postProcessDetection()
         }
         resPtr += colSize;
     }
-    for (auto& outputData : inputArgQueue) {
+    for (auto &outputData : inputArgQueue) {
         HIAI_StatusT ret = SendData(0, "DeviceStreamData", std::static_pointer_cast<void>(outputData));
-        if (HIAI_OK != ret) {
+        if (ret != HIAI_OK) {
             HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "SSDDetection send data failed");
         }
     }
 
     return HIAI_OK;
+}
+
+SSDDetection::~SSDDetection()
+{
 }

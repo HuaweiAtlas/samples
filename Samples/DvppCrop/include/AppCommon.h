@@ -31,6 +31,13 @@
  * ============================================================================
  */
 
+#include <unistd.h>
+#include <sys/stat.h>
+#include "hiaiengine/data_type.h"
+#include "hiaiengine/data_type_reg.h"
+#include "hiaiengine/ai_memory.h"
+#include "Common.h"
+#include "hiaiengine/log.h"
 #ifndef APPCOMMON_H
 #define APPCOMMON_H
 
@@ -38,6 +45,20 @@
 #include <unistd.h>
 
 using namespace std;
+
+using hiai::BatchInfo;
+using hiai::IMAGEFORMAT;
+using hiai::ImageData;
+
+typedef enum ImageType {
+    IMAGE_TYPE_RAW = -1,
+    IMAGE_TYPE_NV12 = 0,
+    IMAGE_TYPE_JPEG,
+    IMAGE_TYPE_PNG,
+    IMAGE_TYPE_BMP,
+    IMAGE_TYPE_TIFF,
+    IMAGE_TYPE_VIDEO = 100
+} ImageTypeT;
 
 static std::vector<std::string> splitpath(const std::string &str, const std::set<char> delimiters)
 {

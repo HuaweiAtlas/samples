@@ -41,6 +41,7 @@
 #include "FileManager.h"
 #include "AppCommon.h"
 #include "Common.h"
+#include <regex>
 
 using namespace std;
 using namespace hiai;
@@ -59,7 +60,8 @@ int main(int argc, char *argv[])
 {
     // change to executable file directory
     shared_ptr<FileManager> fileManager(new FileManager());
-    fileManager->ChangeDir(argv[0]);
+    string path(argv[0], argv[0] + strlen(argv[0]));
+    fileManager->ChangeDir(path.c_str());
 
     vector<uint32_t> chipIdArray { CHIP_ID };
     vector<string> graphConfigPath { GRAPH_CONFIG_PATH };

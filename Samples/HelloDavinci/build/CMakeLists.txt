@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++11 -fstack-protector-all -Wl,-z,relro,-z,now,-z,noexecstack)
 project(HelloDavinci)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})

@@ -35,7 +35,6 @@
 #include "common_data_type.h"
 #include <sys/stat.h>
 
-const uint32_t OUT_PATH_MAX = 128;
 using Stat = struct stat;
 
 void MkdirP(const std::string& outdir)
@@ -79,7 +78,6 @@ HIAI_IMPL_ENGINE_PROCESS("DstEngine", DstEngine, DST_INPUT_SIZE)
     }
 
     if (result->buf.bufferSize <= 0) {
-        printf("[DstEngine] result_data is empty!\n");
         return HIAI_ERROR;
     }
 
@@ -90,21 +88,26 @@ HIAI_IMPL_ENGINE_PROCESS("DstEngine", DstEngine, DST_INPUT_SIZE)
         format = "h265";
     }
 
-    char path[OUT_PATH_MAX];
-    int ret = sprintf_s(path, OUT_PATH_MAX, "%s/h_%d_w_%d_channel%d_result_for_%s_%06d.yuv", outdir,
+    char path[PATH_MAX];
+    int ret = sprintf_s(path, PATH_MAX, "%s/h_%d_w_%d_channel%d_result_for_%s_%06d.yuv", 
+        const_cast<char *>(outdir),
         result->info.height,
         result->info.width,
         result->info.channelId,
-        format.c_str(),
+        const_cast<char *>(format.c_str()),
         outCnt++);
     if (ret <= 0) {
         printf("sprintf_s failed\n");
         return HIAI_ERROR;
     }
 
-    FILE* fpOut = fopen(path, "wb+");
+    char realPath[PATH_MAX] = {0x00};
+    if (realpath(path, realPath) == NULL) {
+        printf("Begin writing file %s...\n", path);
+    }
+    FILE* fpOut = fopen(realPath, "wb+");
     if (fpOut != NULL) {
-        printf("[DstEngine] Wirte decoded file %s\n", path);
+        printf("[DstEngine] Saved decoded file %s\n", realPath);
         fwrite(result->buf.transBuff.get(), 1, result->buf.bufferSize, fpOut);
         fflush(fpOut);
         fclose(fpOut);

@@ -36,6 +36,9 @@
 #include <iostream>
 #include <libgen.h>
 #include <unistd.h>
+#include "FileManager.h"
+#include "Common.h"
+#include <regex>
 
 static const std::string GRAPH_FILENAME = "./graph.config";
 // graph id
@@ -43,7 +46,7 @@ static const uint32_t GRAPH_ID = 100;
 // destination engine id
 static const uint32_t SRC_ENGINE = 101;
 // leaf node engine id
-static const uint32_t terminators[] = { 106 };
+static const uint32_t  TERMINATOR_ID[] = { 106 };
 // flag to guard eos signal
 static std::atomic<int> g_flag = { 1 };
 
@@ -75,10 +78,10 @@ HIAI_StatusT HIAI_InitAndStartGraph(const std::string& configFile)
         return status;
     }
 
-    for (int i = 0; i < sizeof(terminators) / sizeof(uint32_t); i++) {
+    for (int i = 0; i < sizeof(TERMINATOR_ID) / sizeof(uint32_t); i++) {
         hiai::EnginePortID target_port_config;
         target_port_config.graph_id = GRAPH_ID;
-        target_port_config.engine_id = terminators[i];
+        target_port_config.engine_id = TERMINATOR_ID[i];
         target_port_config.port_id = 0;
         graph->SetDataRecvFunctor(target_port_config,
             std::make_shared<CustomDataRecvInterface>(""));
@@ -86,7 +89,7 @@ HIAI_StatusT HIAI_InitAndStartGraph(const std::string& configFile)
     return HIAI_OK;
 }
 
-void my_handler(int s)
+void SaHandle(int s)
 {
     printf("Caught signal %d\n", s);
     if (s == 2) {
@@ -99,16 +102,9 @@ void my_handler(int s)
 int main(int argc, char* argv[])
 {
     // cd to directory of main
-    char* dirc = strdup(argv[0]);
-    if (dirc != NULL) {
-        char* dname = ::dirname(dirc);
-        int r = chdir(dname);
-        if (r != 0) {
-            printf("chdir error code %d\n", r);
-            return -1;
-        }
-        free(dirc);
-    }
+    shared_ptr<FileManager> fileManager(new FileManager());
+    string path(argv[0], argv[0] + strlen(argv[0]));
+    fileManager->ChangeDir(path.c_str());
 
     // init Graph
     HIAI_StatusT ret = HIAI_InitAndStartGraph(GRAPH_FILENAME);
@@ -123,17 +119,17 @@ int main(int argc, char* argv[])
         printf("Fail to get the graph-%u\n", GRAPH_ID);
         return -1;
     }
-    hiai::EnginePortID engine_id;
-    engine_id.graph_id = GRAPH_ID;
-    engine_id.engine_id = SRC_ENGINE;
-    engine_id.port_id = 0;
+    hiai::EnginePortID engineId;
+    engineId.graph_id = GRAPH_ID;
+    engineId.engine_id = SRC_ENGINE;
+    engineId.port_id = 0;
     std::shared_ptr<std::string> src_data(new std::string());
 
-    graph->SendData(engine_id, "string", std::static_pointer_cast<void>(src_data));
+    graph->SendData(engineId, "string", std::static_pointer_cast<void>(src_data));
 
     // wait for ctrl+c
     struct sigaction sigIntHandler;
-    sigIntHandler.sa_handler = my_handler;
+    sigIntHandler.sa_handler = SaHandle;
     sigemptyset(&sigIntHandler.sa_mask);
     sigIntHandler.sa_flags = 0;
     sigaction(SIGINT, &sigIntHandler, NULL);

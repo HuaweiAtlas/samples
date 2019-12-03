@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(DynamicGraph)
-
+add_compile_options(-std=c++11 -fstack-protector-all -Wl,-z,relro,-z,now,-z,noexecstack)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 

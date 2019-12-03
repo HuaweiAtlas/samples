@@ -45,6 +45,7 @@
 class SSDDetection : public hiai::Engine {
 public:
     SSDDetection() {}
+    ~SSDDetection();
 
     HIAI_StatusT Init(const hiai::AIConfig& config,
         const std::vector<hiai::AIModelDescription>& model_desc);

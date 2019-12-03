@@ -39,8 +39,14 @@
 #include "hiaiengine/engine.h"
 #include "hiaiengine/multitype_queue.h"
 #include "TransSear.h"
+#include "CropResize.h"
+#include "EngineImageTrans.h"
+#include "Common.h"
 
 HIAI_REGISTER_SERIALIZE_FUNC("GraphCtrlInfoT", GraphCtrlInfoT, GetTransSearPtr, GetTransDearPtr);
+// register EngineImageTransT
+HIAI_REGISTER_SERIALIZE_FUNC("EngineImageTransT", EngineImageTransT, GetEngineImageTransPtr,
+                             GetEngineImageTransrPtr);
 
 #define INPUT_SIZE  1
 #define OUTPUT_SIZE 1
@@ -64,7 +70,10 @@ private:
     // Private implementation a member variable, which is used to cache the input queue
     hiai::MultiTypeQueue input_que_;
     // send data to next engine
-    HIAI_StatusT SendDataToDst(uint8_t *&outBuffer, const uint32_t outBufferSize);
+    HIAI_StatusT SendDataToDst(const shared_ptr<CropResizeOutputImage> cropResizeOutputImage);
+    HIAI_StatusT CropImage(const std::shared_ptr<DecodeOutputImage> decodeOutputImage,
+                           shared_ptr<CropResizeOutputImage> cropResizeOutputImage,
+                           const float resizeFactorW, const float resizeFactorH);
 };
 
 #endif

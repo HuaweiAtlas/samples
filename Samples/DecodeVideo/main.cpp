@@ -40,6 +40,8 @@
 #include <cstring>
 #include <libgen.h>
 #include <unistd.h>
+#include "FileManager.h"
+#include "Common.h"
 
 // flag to guard eos signal
 static std::atomic<int> g_flag = { 0 };
@@ -57,6 +59,7 @@ static const uint32_t PORT_ID = 0;
 static const uint32_t GRAPH_ID = 100;
 // sleep time
 static const uint32_t USLEEP_TIME = 100000;
+
 /**
  * @ingroup CustomDataRecvInterface
  * @brief RecvData callback function
@@ -152,11 +155,7 @@ int main(int argc, char* argv[])
 
     CommandParser options;
 
-    options
-        .addOption("-h")
-        .addOption("-g", "1")
-        .addOption("-d", "0")
-        .addOption("-i", "../data/test.h264");
+    options.addOption("-h").addOption("-g", "1").addOption("-d", "0").addOption("-i", "../data/test.h264");
 
     options.parseArgs(argc, argv);
 
@@ -165,12 +164,9 @@ int main(int argc, char* argv[])
     int decode = parseStrToInt(options.cmdGetOption("-d"));
     int groups = parseStrToInt(options.cmdGetOption("-g"));
 
-    char* dirc = strdup(argv[0]);
-    if (dirc != NULL) {
-        char* dname = ::dirname(dirc);
-        int r = chdir(dname);
-        free(dirc);
-    }
+    shared_ptr<FileManager> fileManager(new FileManager());
+    string path(argv[0], argv[0] + strlen(argv[0]));
+    fileManager->ChangeDir(path.c_str());
 
     if (help || HIAI_OK != checkArgs(filename, decode, groups)) {
         showUsage();

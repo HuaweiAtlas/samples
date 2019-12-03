@@ -1,3 +1,19 @@
+/******************************************************************************
+
+                  版权所有 (c) 华为技术有限公司 2012-2018
+
+ ******************************************************************************
+   文 件 名   : mbox_sample.c
+  版 本 号   : 1.0
+  作    者   :
+  生成日期   : 2019.08.06
+  最近修改   : create file
+  功能描述   : 容器邮箱sample文件
+  函数列表   :
+
+  修改历史   :
+  2019.08.06 create file
+******************************************************************************/
 /* mbox_test.c */
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,15 +26,15 @@
 
 #ifdef __cplusplus
 #if __cplusplus
-extern "C"{
+extern "C" {
 #endif
 #endif /* __cplusplus */
 
 bool g_bStopRecv = false;
 char g_acWatchFile[MBOX_PATH_MAX_SIZE] = MBOX_UP_PATH;
 
-#define MBOX_FAILOVER_REQUEST_STR   "failover request"
-#define MBOX_QUERY_STATUS_STR       "query ha status"
+#define MBOX_FAILOVER_REQUEST_STR "failover request"
+#define MBOX_QUERY_STATUS_STR "query ha status"
 
 void *RecvMsgThread(void *pvArg)
 {
@@ -32,25 +48,22 @@ void *RecvMsgThread(void *pvArg)
     struct inotify_event astEvent[MBOX_READ_EVENT_MAX] = {0};
 
     char acBuf[MBOX_MSG_MAX_SIZE] = {0};
-    while (!g_bStopRecv)
-    {
+    while (!g_bStopRecv) {
         pstEvt = mbox_get_event(astEvent, &uiOffset, &uiEnd);
-        if (NULL == pstEvt)
-        {
-            usleep(1*1000);
+        if (NULL == pstEvt) {
+            usleep(1 * 1000);
             continue;
         }
 
         iRet = mbox_read_msg(g_acWatchFile, acBuf, sizeof(acBuf));
-        if (0 != iRet)
-        {
+        if (0 != iRet) {
             printf("mbox_read_msg fail, file=%s, ret=%d\n", g_acWatchFile, iRet);
             continue;
         }
 
         printf("Recv message===>>>[%s] \n", acBuf);
     }
-    
+
     printf("==========exit  receive msg=============\n");
     return NULL;
 }
@@ -59,32 +72,29 @@ void *RecvMsgThread(void *pvArg)
 int start_recv()
 {
     pthread_t thread;
-    
-    int iRet = 0;
+
+    int iRet;
     iRet = pthread_create(&thread, NULL, RecvMsgThread, 0);
-    if (0 != iRet) 
-    {
+    if (0 != iRet) {
         printf("==========create recv thread failed=============\n");
-    } 
+    }
 
     return iRet;
 }
 
 /* 向mbox发送消息 */
-int send_mbox_message(const char* request, int nLength)
+int send_mbox_message(const char *request, int nLength)
 {
-    int iRet = 0;
+    int iRet;
 
     iRet = mbox_client_request(request, nLength);
-    if (0 != iRet)
-    {
+    if (0 != iRet) {
         printf("mbox_send fail, ret=%d\n", iRet);
         return -1;
     }
 
     printf("====>>>>send message success! [%s]\n", request);
     return 0;
-    
 }
 
 /* 查询主备状态 */
@@ -99,7 +109,6 @@ int forceswap()
     return send_mbox_message(MBOX_FAILOVER_REQUEST_STR, sizeof(MBOX_FAILOVER_REQUEST_STR));
 }
 
-
 /* 停止接收mbox发送过来的消息 */
 int stop_recv()
 {
@@ -107,14 +116,12 @@ int stop_recv()
     return query_ha_status();
 }
 
-
 /*  初始化 */
 int init_mbox()
 {
-    int iRet = 0;
+    int iRet;
     iRet = mbox_client_watch(g_acWatchFile);
-    if (0 != iRet)
-    {
+    if (0 != iRet) {
         printf("init mbox fail, ret=%d\n", iRet);
         return -1;
     }
@@ -130,14 +137,11 @@ int init_mbox()
 4.发送
 5.请求倒换
  */
-
 int main(int argc, char *argv[])
 {
     printf("===>>>mbox client start!\n");
-    
 
-    while(1)
-    {
+    while (1) {
         printf("1-init mbox\n"
                "2-start receive message\n"
                "3-stop receive\n"
@@ -145,33 +149,29 @@ int main(int argc, char *argv[])
                "5-force swap\n");
         printf("please input operation\n");
         int nOpt = 0;
-        cin>>nOpt;
-        switch(nOpt)
-        {
-          case 1:
-            init_mbox();
-            break;
-          case 2:
-            start_recv();
-            break;
-          case 3:
-            {
+        cin >> nOpt;
+        switch (nOpt) {
+            case 1:
+                init_mbox();
+                break;
+            case 2:
+                start_recv();
+                break;
+            case 3: {
                 stop_recv();
                 return 0;
-            }
-            break;
-          case 4:
-            query_ha_status();
-            break;
-          case 5:
-            forceswap();
-            break;
-          default:
-            break;
+            } break;
+            case 4:
+                query_ha_status();
+                break;
+            case 5:
+                forceswap();
+                break;
+            default:
+                break;
         }
-
     }
-    
+
     return 0;
 }
 
@@ -180,5 +180,3 @@ int main(int argc, char *argv[])
 }
 #endif
 #endif /* __cplusplus */
-
-

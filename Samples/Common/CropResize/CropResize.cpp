@@ -36,6 +36,7 @@
 
 /* 0:do not change format, 1:change format(RGBA->RGB) */
 const int TRANSFORM_NOT_CHANGE = 0;
+const int TRANSFORM_CHANGE = 1;
 
 /**
  * @brief DecodeJpeg
@@ -57,7 +58,7 @@ HIAI_StatusT CropResize::DecodeJpeg(const uint32_t fileSize, const std::shared_p
     dvppapiCtlMsg.out = (void *)&jpegdOutData;
     dvppapiCtlMsg.out_size = sizeof(jpegdOutData);
     // create api
-    HIAI_StatusT ret = CreateDvppApi(pidvppapi);
+    int ret = CreateDvppApi(pidvppapi);
     if (ret != 0) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "create dvpp api fail.!\n");
         return ret;
@@ -67,7 +68,7 @@ HIAI_StatusT CropResize::DecodeJpeg(const uint32_t fileSize, const std::shared_p
     if (ret != 0) {
         DestroyDvppApi(pidvppapi);
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "dvpp process error.\n");
-        return ret;
+        return HIAI_ERROR;
     } else {
         DestroyDvppApi(pidvppapi);
         HIAI_ENGINE_LOG(HIAI_IDE_INFO, "dvpp process success.\n");
@@ -91,20 +92,20 @@ HIAI_StatusT CropResize::DecodeJpeg(const uint32_t fileSize, const std::shared_p
  * @param [out] : decodeOutputImage, the decode output
  * @return : HIAI_StatusT, HIAI_OK: success
  */
-HIAI_StatusT CropResize::DecodePng(const uint32_t fileSize, const std::shared_ptr<uint8_t> dataBuff,
-                                    std::shared_ptr<DecodeOutputImage> decodeOutputImage)
+HIAI_StatusT CropResize::DecodePng(const uint32_t fileSize, const std::shared_ptr<uint8_t> dataBuff, 
+                                   std::shared_ptr<DecodeOutputImage> decodeOutputImage)
 {
     inputPngData.inputData = (unsigned char *)(dataBuff.get());
     inputPngData.inputSize = fileSize;
     //0:do not change format, 1:change format
-    inputPngData.transformFlag = TRANSFORM_NOT_CHANGE;
+    inputPngData.transformFlag = TRANSFORM_CHANGE;
 
     dvppapiCtlMsg.in = (void*)&inputPngData;
     dvppapiCtlMsg.in_size = sizeof(inputPngData);
     dvppapiCtlMsg.out = (void*)&outputPngData;
     dvppapiCtlMsg.out_size = sizeof(outputPngData);
 
-    HIAI_StatusT ret = CreateDvppApi(pidvppapi);
+    int ret = CreateDvppApi(pidvppapi);
     if (ret != 0) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "create dvpp api fail.\n");
         return HIAI_ERROR;
@@ -178,6 +179,32 @@ void CropResize::ConstructRoiOutputConfigure(const std::shared_ptr<DecodeOutputI
     outputConfigure->outputArea.downOffset = cropResizePara.cropAreaArray[0].outputDownOffset;
 }
 
+/* construct roi output configure. */
+void CropResize::ConstructRoiOutputConfigure(const std::shared_ptr<DecodeOutputImage> decodeOutputImage,
+                                             VpcUserRoiOutputConfigure *&outputConfigure,
+                                             const CropResizePara cropResizePara,
+                                             std::shared_ptr<CropResizeOutputImage> cropResizeOutputImage)
+{
+    uint32_t outWidth = (uint32_t)decodeOutputImage->imgWidth * cropResizePara.resizeFactorW;
+    uint32_t outHeight = (uint32_t)decodeOutputImage->imgHeight * cropResizePara.resizeFactorH;
+    uint32_t outWidthAligned = ALIGN_UP(outWidth, WIDTH_ALIGNED);
+    uint32_t outHeightAligned = ALIGN_UP(outHeight, HEIGHT_ALIGNED);
+
+    outputConfigure->widthStride = outWidthAligned;
+    outputConfigure->heightStride = outHeightAligned;
+    outputConfigure->addr = cropResizeOutputImage->outBuffer;
+    outputConfigure->bufferSize = cropResizeOutputImage->outBufferSize;
+    outputConfigure->outputArea.leftOffset = cropResizePara.cropAreaArray[0].outputLeftOffset;
+    outputConfigure->outputArea.rightOffset = cropResizePara.cropAreaArray[0].outputRightOffset;
+    outputConfigure->outputArea.upOffset = cropResizePara.cropAreaArray[0].outputUpOffset;
+    outputConfigure->outputArea.downOffset = cropResizePara.cropAreaArray[0].outputDownOffset;
+
+    cropResizeOutputImage->imgWidth = outWidth;
+    cropResizeOutputImage->imgHeight = outHeight;
+    cropResizeOutputImage->imgWidthAligned = outWidthAligned;
+    cropResizeOutputImage->imgHeightAligned = outHeightAligned;
+}
+
 /**
  * @brief crop or resize image
  * @param [in] : decodeOutputImage, the decode output, the crop or resize input
@@ -205,6 +232,8 @@ HIAI_StatusT CropResize::CropResizeImage(const std::shared_ptr<DecodeOutputImage
         outputCropResizePara.cropAreaArray.push_back(cropResizePara.cropAreaArray[i]);
         outputCropResizePara.resizeFactorW = cropResizePara.resizeFactorW;
         outputCropResizePara.resizeFactorH = cropResizePara.resizeFactorH;
+        outputCropResizePara.outputFormat = cropResizePara.outputFormat;
+        outputCropResizePara.inputFormat = INPUT_YUV400; //not use, init 0
 
         ConstructRoiOutputConfigure(decodeOutputImage, outputConfigure, outputCropResizePara, outBuffer, outBufferSize);
         imageConfigure->roiConfigure = roiConfigure.get();
@@ -218,12 +247,12 @@ HIAI_StatusT CropResize::CropResizeImage(const std::shared_ptr<DecodeOutputImage
         }
 
         IDVPPAPI *pidvppapi = nullptr;
-        HIAI_StatusT ret = CreateDvppApi(pidvppapi);
+        int ret = CreateDvppApi(pidvppapi);
         if (ret != 0) {
             while (imageConfigure->roiConfigure != nullptr) {
                 imageConfigure->roiConfigure = imageConfigure->roiConfigure->next;
             }
-            return ret;
+            return HIAI_ERROR;
         }
         // control msg
         dvppapi_ctl_msg dvppApiCtlMsg;
@@ -234,9 +263,8 @@ HIAI_StatusT CropResize::CropResizeImage(const std::shared_ptr<DecodeOutputImage
         if (ret != 0) {
             HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "call vpc dvppctl process faild!\n");
             ret = DestroyDvppApi(pidvppapi);
-            return ret;
+            return HIAI_ERROR;
         } else {
-            printf("call vpc dvppctl process success!\n");
             HIAI_ENGINE_LOG(HIAI_IDE_INFO, "call vpc dvppctl process success!\n");
         }
     }
@@ -244,14 +272,79 @@ HIAI_StatusT CropResize::CropResizeImage(const std::shared_ptr<DecodeOutputImage
 }
 
 /**
+ * @brief crop or resize image
+ * @param [in] : decodeOutputImage, the decode output, the crop or resize input
+ * @param [in] : cropResizePara, the param of crop or resize
+ * @param [in] : outBufferSize, output buffer size
+ * @param [out] : outBuffer, output buffer
+ * @return : HIAI_StatusT, HIAI_OK: success
+ */
+HIAI_StatusT CropResize::CropResizeImage(const std::shared_ptr<DecodeOutputImage> decodeOutputImage,
+                                         const CropResizePara cropResizePara,
+                                         std::shared_ptr<CropResizeOutputImage> cropResizeOutputImage)
+{
+    HIAI_ENGINE_LOG(HIAI_IDE_INFO, "CropResize process start !");
+    ConstructImageConfigure(decodeOutputImage, imageConfigure, cropResizePara.inputFormat, cropResizePara.outputFormat);
+
+    std::shared_ptr<VpcUserRoiConfigure> lastRoi;  // record the last roi configuration
+    for (int i = 0; i < cropResizePara.cropAreaArray.size(); i++) {
+        std::shared_ptr<VpcUserRoiConfigure> roiConfigure(new VpcUserRoiConfigure);
+        roiConfigure->next = nullptr;
+        VpcUserRoiInputConfigure *inputConfigure = &roiConfigure->inputConfigure;
+        ConstructRoiInputConfigure(cropResizePara.cropAreaArray[i], inputConfigure);
+        // set roi configuration
+        VpcUserRoiOutputConfigure *outputConfigure = &roiConfigure->outputConfigure;
+        CropResizePara outputCropResizePara;
+        outputCropResizePara.cropAreaArray.push_back(cropResizePara.cropAreaArray[i]);
+        outputCropResizePara.resizeFactorW = cropResizePara.resizeFactorW;
+        outputCropResizePara.resizeFactorH = cropResizePara.resizeFactorH;
+        outputCropResizePara.outputFormat = cropResizePara.outputFormat;
+        outputCropResizePara.inputFormat = INPUT_YUV400; //not use, init 0
+
+        ConstructRoiOutputConfigure(decodeOutputImage, outputConfigure, outputCropResizePara, cropResizeOutputImage);
+        imageConfigure->roiConfigure = roiConfigure.get();
+        // if it is the first one, set it to imageConfigure
+        if (i == 0) {
+            imageConfigure->roiConfigure = roiConfigure.get();
+            lastRoi = roiConfigure;
+        } else {
+            lastRoi->next = roiConfigure.get();
+            lastRoi = roiConfigure;
+        }
+
+        IDVPPAPI *pidvppapi = nullptr;
+        int ret = CreateDvppApi(pidvppapi);
+        if (ret != 0) {
+            while (imageConfigure->roiConfigure != nullptr) {
+                imageConfigure->roiConfigure = imageConfigure->roiConfigure->next;
+            }
+            return HIAI_ERROR;
+        }
+        // control msg
+        dvppapi_ctl_msg dvppApiCtlMsg;
+        dvppApiCtlMsg.in = static_cast<void *>(imageConfigure.get());
+        dvppApiCtlMsg.in_size = sizeof(VpcUserImageConfigure);
+        // resize the yuv
+        ret = DvppCtl(pidvppapi, DVPP_CTL_VPC_PROC, &dvppApiCtlMsg);
+        if (ret != 0) {
+            HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "call vpc dvppctl process faild!\n");
+            ret = DestroyDvppApi(pidvppapi);
+            return HIAI_ERROR;
+        } else {
+            HIAI_ENGINE_LOG(HIAI_IDE_INFO, "call vpc dvppctl process success!\n");
+        }
+    }
+    return HIAI_OK;
+}
+
+
+/**
  * @brief get mul crop or resize area according to the specify rol number or col number. It is only used for testing
  * @param [in] : outWidth, the width of image
  * @param [in] : outHeight, the height of image
- * @param [in] : rolNum
- * @param [in] : colNum
  * @return : vector<CropArea>, the array of crop resize. the size is equal to rolNum*colNum
  */
-vector<CropArea> CropResize::getMulCropArea(uint32_t outWidth, uint32_t outHeight, uint32_t rolNum,
+vector<CropArea> CropResize::GetMulCropArea(uint32_t outWidth, uint32_t outHeight, uint32_t rolNum,
                                             uint32_t colNum)
 {
     HIAI_ENGINE_LOG(HIAI_IDE_INFO, "get MulCropArea process start !");
@@ -280,15 +373,15 @@ vector<CropArea> CropResize::getMulCropArea(uint32_t outWidth, uint32_t outHeigh
     for (int i = 0; i < rolNum; i++) {
         for (int j = 0; j < colNum; j++) {
             CropArea cropArea;
-            cropArea.cropLeftOffset = ALIGN_UP(widthStart + i * blockWidth, HEIGHT_ALIGNED);
-            cropArea.cropRightOffset = CHECK_ODD(cropArea.cropLeftOffset + cropWidth-1);
+            cropArea.cropLeftOffset = ALIGN_UP(widthStart + i * blockWidth, WIDTH_ALIGNED);
+            cropArea.cropRightOffset = CHECK_ODD(cropArea.cropLeftOffset + cropWidth - 1);
             cropArea.cropUpOffset = CHECK_EVEN(heigthStart + j * blockHeigth);
-            cropArea.cropDownOffset = CHECK_ODD(cropArea.cropUpOffset + cropHeigth-1);
+            cropArea.cropDownOffset = CHECK_ODD(cropArea.cropUpOffset + cropHeigth - 1);
 
-            cropArea.outputLeftOffset = ALIGN_UP(widthStart + i * blockWidth, HEIGHT_ALIGNED);
-            cropArea.outputRightOffset = CHECK_ODD(cropArea.outputLeftOffset + cropWidth-1);
+            cropArea.outputLeftOffset = ALIGN_UP(widthStart + i * blockWidth, WIDTH_ALIGNED);
+            cropArea.outputRightOffset = CHECK_ODD(cropArea.outputLeftOffset + cropWidth - 1);
             cropArea.outputUpOffset = CHECK_EVEN(heigthStart + j * blockHeigth);
-            cropArea.outputDownOffset = CHECK_ODD(cropArea.outputUpOffset + cropHeigth-1);
+            cropArea.outputDownOffset = CHECK_ODD(cropArea.outputUpOffset + cropHeigth - 1);
             cropAreaArray.push_back(cropArea);
         }
     }
@@ -303,11 +396,11 @@ vector<CropArea> CropResize::getMulCropArea(uint32_t outWidth, uint32_t outHeigh
  * @param [in] : outHeight, the height of image
  * @return : vector<CropArea>, the array of crop resize. the size is equal to 1
  */
-vector<CropArea> CropResize::getSingleArea(uint32_t outWidth, uint32_t outHeight)
+vector<CropArea> CropResize::GetSingleArea(uint32_t outWidth, uint32_t outHeight)
 {
     uint32_t singleRow = 1;
     uint32_t singleCol = 1;
-    return this->getMulCropArea(outWidth, outHeight, singleRow, singleCol);
+    return this->GetMulCropArea(outWidth, outHeight, singleRow, singleCol);
 }
 
 /**
@@ -316,9 +409,9 @@ vector<CropArea> CropResize::getSingleArea(uint32_t outWidth, uint32_t outHeight
  * @param [in] : outHeight, the height of image
  * @return : vector<CropArea>, the array of crop resize. the size is equal to 1
  */
-vector<CropArea> CropResize::getResizeArea(uint32_t outWidth, uint32_t outHeight)
+vector<CropArea> CropResize::GetResizeArea(uint32_t outWidth, uint32_t outHeight)
 {
-    return this->getSingleArea(outWidth, outHeight);
+    return this->GetSingleArea(outWidth, outHeight);
 }
 
 /**
@@ -327,9 +420,9 @@ vector<CropArea> CropResize::getResizeArea(uint32_t outWidth, uint32_t outHeight
  * @param [in] : outHeight, the height of image
  * @return : vector<CropArea>, the array of crop resize. the size is equal to 1
  */
-vector<CropArea> CropResize::getCropArea(uint32_t outWidth, uint32_t outHeight)
+vector<CropArea> CropResize::GetCropArea(uint32_t outWidth, uint32_t outHeight)
 {
-    return this->getSingleArea(outWidth, outHeight);
+    return this->GetSingleArea(outWidth, outHeight);
 }
 
 /**
@@ -339,7 +432,7 @@ vector<CropArea> CropResize::getCropArea(uint32_t outWidth, uint32_t outHeight)
  * @param [in] : resizeFactorH, the resize scale of height
  * @return : uint32_t, the yuv buffer size
  */
-uint32_t CropResize::getYuvOutputBufferSize(const std::shared_ptr<DecodeOutputImage> decodeOutputImage,
+uint32_t CropResize::GetYuvOutputBufferSize(const std::shared_ptr<DecodeOutputImage> decodeOutputImage,
                                             const float resizeFactorW, const float resizeFactorH)
 {
     uint32_t outWidth = (uint32_t)decodeOutputImage->imgWidth * resizeFactorW;

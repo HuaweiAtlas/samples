@@ -62,16 +62,17 @@ private:
     void pullStreamDataLoop();
     void stopStream();
     HIAI_StatusT startStream(const string& streamName);
+    HIAI_StatusT SendDataToNextEngin(const uint32_t eos);
 
     // class member
     std::shared_ptr<AVFormatContext> pFormatCtx;
     // stream info
     uint64_t blockId = 0;
-    uint32_t mWidth;
-    uint32_t mHeight;
+    uint32_t mWidth = 0;
+    uint32_t mHeight = 0;
     uint32_t channelId = 0;
     uint32_t format = H264;
-    int videoIndex;
+    int videoIndex = 0;
     std::atomic<int> stop = { 0 };
     std::thread sendDataRunner;
     RawDataBufferHigh dataBuffer;

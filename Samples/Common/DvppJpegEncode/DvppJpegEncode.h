@@ -51,6 +51,7 @@ struct JpegEncodeIn {
     eEncodeFormat format;
     uint32_t level;
     std::shared_ptr<uint8_t> inBufferPtr;
+    uint32_t alignMethod;
 };
 
 struct JpegEncodeOut {

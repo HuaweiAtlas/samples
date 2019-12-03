@@ -33,10 +33,8 @@
 #ifndef ATLASSAMPLES_VDECENGINE_H
 #define ATLASSAMPLES_VDECENGINE_H
 
-// #include "app_common.h"
 #include "common_data_type.h"
 #include "dvpp/idvppapi.h"
-#include "dvpp/vdec_hiai.h"
 #include "hiaiengine/engine.h"
 
 #define VD_INPUT_SIZE 1
@@ -47,14 +45,13 @@ public:
     VDecEngine() {}
     ~VDecEngine();
     HIAI_StatusT Init(const hiai::AIConfig& config,
-        const std::vector<hiai::AIModelDescription>& model_desc);
+                      const std::vector<hiai::AIModelDescription>& model_desc);
 
     HIAI_DEFINE_PROCESS(VD_INPUT_SIZE, VD_OUTPUT_SIZE)
-
-    HIAI_StatusT Hfbc2YuvOld(FRAME* frame, vpc_in_msg& vpcInMsg);
+    HIAI_StatusT Hfbc2YuvNew(FRAME *frame,  uint8_t *outputBuffer);
 
 private:
-    static void frameCallback(FRAME* frame, void* hiai_data);
+    static void FrameCallback(FRAME* frame, void* hiai_data);
 
     IDVPPAPI* pVdecHandle = NULL;
     IDVPPAPI* pDvppHandle = NULL;

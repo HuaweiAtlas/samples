@@ -149,4 +149,8 @@ bool GraphManager::IsRunning()
     return this->isRunning;
 }
 
+GraphManager::~GraphManager()
+{
+    
+}
 

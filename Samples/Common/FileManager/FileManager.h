@@ -58,17 +58,17 @@ typedef struct FileInfo {
 
 class FileManager {
 public:
-    bool ExistFile(const string &path);
-    bool ExistDir(const string &path);
-    bool CreateDir(const string &path);
-    bool CreateFile(const string &path);
-    bool ReadFile(const string &path, FileInfo &fileData);
-    vector<string> ReadByExtension(const string &dir, const vector<string> format);
-    string GetExtension(const string &path);
-    string GetName(const string &path);
-    string GetParent(const string &path);
+    bool ExistFile(const string &dirPath);
+    bool ExistDir(const string &dirPath);
+    bool CreateDir(const string &dirPath);
+    bool CreateFile(const string &dirPath);
+    bool ReadFile(const string &dirPath, FileInfo &fileData);
+    vector<string> ReadByExtension(const string &dirPath, const vector<string> format);
+    string GetExtension(const string &dirPath);
+    string GetName(const string &dirPath);
+    string GetParent(const string &dirPath);
     bool ChangeDir(const char *dirPath);
     std::vector<std::string> SplitPath(const std::string &str, const std::set<char> delimiters);
-    bool ReadFileWithDmalloc(const string &path, FileInfo &fileInfo);
+    bool ReadFileWithDmalloc(const string &dirPath, FileInfo &fileInfo);
 };
 #endif  // DVPPANDOPENCV_FILEMANAGER_H

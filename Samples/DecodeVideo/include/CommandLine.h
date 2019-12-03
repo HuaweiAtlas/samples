@@ -40,6 +40,13 @@
 
 // max decode channels
 static const uint32_t MAX_CHANNELS = 16;
+// suffixes 
+static const std::string suffixes[] = { "264", "265" };
+
+static bool endsWith(const std::string& str, const std::string& suffix)
+{
+    return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
+}
 
 static HIAI_StatusT checkArgs(const std::string& filename, const int decode, const int groups)
 {
@@ -58,6 +65,10 @@ static HIAI_StatusT checkArgs(const std::string& filename, const int decode, con
         printf("invalid input params d %d\n", decode);
         return HIAI_ERROR;
     }
+    if (!endsWith(filename, suffixes[decode])) {
+        printf("Wrong video format with decode type!\n\tVideo name is %s while decode type is %d\n", filename.c_str(), decode);
+        return HIAI_ERROR;
+    }
     return HIAI_OK;
 }
 
@@ -70,6 +81,7 @@ static void showUsage()
     printf("    -d                             dvpp type:\n");
     printf("                                   0 - decode h264\n");
     printf("                                   1 - decode h265\n");
+    printf("                                   default is 0 (h264)\n");
     printf("    -g                             graph count per chip, default is 1\n");
     printf("Eg:\n");
     printf("    ./main -i /path/to/video/file.264\n");

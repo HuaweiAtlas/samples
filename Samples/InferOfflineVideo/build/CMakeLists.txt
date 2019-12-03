@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
+add_compile_options(-std=c++11 -fstack-protector-all -Wl,-z,relro,-z,now,-z,noexecstack)
 project(VideoDetection)
 
 set(CMAKE_C_STANDARD 11)
@@ -19,6 +20,7 @@ include_directories(${DDK_INCLUDE_DIRS} ${DDK_CEREAL_INCLUDE_DIRS} ${DDK_PROTOBU
 
 include_directories(${PROJECT_SRC_ROOT}/include)
 include_directories(${PROJECT_SRC_ROOT}/Common)
+include_directories(${PROJECT_SRC_ROOT}/../Common/)
 
 add_subdirectory(device)
 add_subdirectory(host)

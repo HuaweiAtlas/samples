@@ -32,6 +32,7 @@
  */
 
 #include "StreamPuller.h"
+#include "SampleMemory.h"
 #include "error_code.h"
 #include "hiaiengine/ai_memory.h"
 #include "utils_common.h"
@@ -47,12 +48,12 @@ std::shared_ptr<AVFormatContext> createFormatContext(const std::string& streamNa
     if (nullptr != options) {
         av_dict_free(&options);
     }
-    if (0 != ret) {
+    if (ret != 0) {
         printf("Couldn't open input stream %s, ret=%d\n", streamName.c_str(), ret);
         return nullptr;
     }
     ret = avformat_find_stream_info(formatContext, nullptr);
-    if (0 != ret) {
+    if (ret != 0) {
         printf("Couldn't find stream information\n");
         return nullptr;
     }
@@ -67,23 +68,23 @@ StreamPuller::~StreamPuller()
 
 void StreamPuller::getStreamInfo()
 {
-    if (nullptr != pFormatCtx) {
+    if (pFormatCtx != nullptr) {
         videoIndex = -1;
+        AVCodecID codecId = pFormatCtx->streams[0]->codecpar->codec_id;
+        if (codecId == AV_CODEC_ID_H264) {
+            format = H264;
+        } else if (codecId == AV_CODEC_ID_H265) {
+            format = H265;
+        } else {
+            printf("\033[0;31mError unsupported format %d\033[0m\n", codecId);
+            return;
+        }
         for (int i = 0; i < pFormatCtx->nb_streams; i++) {
             AVStream* inStream = pFormatCtx->streams[i];
             if (inStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
                 videoIndex = i;
                 mHeight = inStream->codecpar->height;
-                mWidth = inStream->codecpar->width;
-                AVCodecID codecId = inStream->codecpar->codec_id;
-                if (codecId == AV_CODEC_ID_H264) {
-                    format = H264;
-                } else if (codecId == AV_CODEC_ID_H265) {
-                    format = H265;
-                } else {
-                    printf("\033[0;31mError unsupported format %d\033[0m\n", codecId);
-                    return;
-                }
+                mWidth = inStream->codecpar->width;                
             } else {
                 printf("Error codec_type %d\n", inStream->codecpar->codec_type);
             }
@@ -94,17 +95,34 @@ void StreamPuller::getStreamInfo()
     }
 }
 
+HIAI_StatusT StreamPuller::SendDataToNextEngin(const uint32_t eos)
+{
+    std::shared_ptr<StreamRawData> output = std::make_shared<StreamRawData>();
+    output->buf = dataBuffer;
+    output->info.channelId = channelId;
+    output->info.format = format;
+    output->info.isEOS = eos;
+
+    HIAI_StatusT ret = SendData(0, "StreamRawData", std::static_pointer_cast<void>(output));
+    
+    return ret;
+}
+
 void StreamPuller::pullStreamDataLoop()
 {
     AVPacket pkt;
     while (1) {
-        if (stop || nullptr == pFormatCtx) {
+        if (stop || pFormatCtx == nullptr) {
             break;
         }
         av_init_packet(&pkt);
         int ret = av_read_frame(pFormatCtx.get(), &pkt);
-        if (0 != ret) {
-            printf("channel %d Read frame failed, continue!\n", channelId);
+        if (ret != 0) {
+            printf("[StreamPuller] channel %d Read frame failed, continue!\n", channelId);
+            if (ret == AVERROR_EOF) {
+                printf("[StreamPuller] channel %d StreamPuller is EOF, over!\n", channelId);
+                break;
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         } else if (pkt.stream_index == videoIndex) {
@@ -113,48 +131,34 @@ void StreamPuller::pullStreamDataLoop()
                 continue;
             }
 
-            uint8_t* buffer;
-            ret = hiai::HIAIMemory::HIAI_DMalloc(pkt.size, (void*&)buffer,
-                hiai::MALLOC_DEFAULT_TIME_OUT,
-                hiai::HIAI_MEMORY_ATTR_MANUAL_FREE);
+            uint8_t* buffer = (uint8_t*)Sample_DMalloc(pkt.size);
 
-            if (HIAI_OK != ret) {
-                printf("channel %d HIAI_DMalloc buffer faild\n", channelId);
+            if (buffer == NULL) {
+                printf("channel %d Sample_DMalloc buffer faild\n", channelId);
                 av_packet_unref(&pkt);
                 break;
             }
 
             memcpy_s(buffer, pkt.size, pkt.data, pkt.size);
-            dataBuffer.data = std::shared_ptr<uint8_t>(buffer, hiai::HIAIMemory::HIAI_DFree);
+            dataBuffer.data = std::shared_ptr<uint8_t>(buffer, Sample_DFree);
             dataBuffer.len_of_byte = pkt.size;
             blockId++;
-            std::shared_ptr<StreamRawData> output = std::make_shared<StreamRawData>();
-            output->buf = dataBuffer;
-            output->info.channelId = channelId;
-            output->info.format = format;
-            output->info.isEOS = 0;
 
-            HIAI_StatusT ret = SendData(0, "StreamRawData", std::static_pointer_cast<void>(output));
-
+            HIAI_StatusT ret = SendDataToNextEngin(0);
             if (ret != HIAI_OK) {
                 printf("channel %d StreamPuller send data failed %d\n", channelId, ret);
-                if (1) {
-                    printf("channel %d sleep for 1 seconds\n", channelId);
-                    std::this_thread::sleep_for(std::chrono::seconds(1));
-                }
+                std::this_thread::sleep_for(std::chrono::seconds(1));
             } else {
                 printf("channel %d pkt.size %d\n", channelId, pkt.size);
             }
-
             av_packet_unref(&pkt);
-
         }
     }
-    std::shared_ptr<StreamRawData> output = std::make_shared<StreamRawData>();
-    output->info.channelId = channelId;
-    output->info.format = format;
-    output->info.isEOS = 1;
-    HIAI_StatusT ret = SendData(0, "StreamRawData", std::static_pointer_cast<void>(output));
+
+    HIAI_StatusT ret = SendDataToNextEngin(1);
+    if (ret != HIAI_OK) {
+        printf("channel %d StreamPuller send data failed %d\n", channelId, ret);
+    }
     printf("channel %d pullStreamDataLoop end of stream\n", channelId);
     av_init_packet(&pkt);
     stop = 1;
@@ -173,7 +177,7 @@ HIAI_StatusT StreamPuller::startStream(const string& streamName)
     stopStream();
     stop = 0;
     pFormatCtx = createFormatContext(streamName);
-    if (nullptr == pFormatCtx) {
+    if (pFormatCtx == nullptr) {
         return HIAI_ERROR;
     }
     // for debug dump
@@ -187,7 +191,6 @@ HIAI_StatusT StreamPuller::startStream(const string& streamName)
 
 HIAI_StatusT StreamPuller::Init(const hiai::AIConfig& config, const std::vector<hiai::AIModelDescription>& model_desc)
 {
-    //printf("StreamPuller Init start\n");
     auto aimap = kvmap(config);
     if (aimap.count("format")) {
         if (aimap["format"] == "h264") {

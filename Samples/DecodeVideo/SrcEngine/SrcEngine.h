@@ -35,6 +35,7 @@
 #define SRCENGINE_H
 #include "common_data_type.h"
 #include "hiaiengine/engine.h"
+#include "Common.h"
 
 #define SRC_INPUT_SIZE  1
 #define SRC_OUTPUT_SIZE 1

@@ -10,6 +10,8 @@ checkArgs "$@"
 
 if [ $build_target == "A300" ]; then	
 	buildA300 $build_target $build_type $path_cur
+elif [ $build_target == "A200" ]; then	
+	buildA200 $build_target $build_type $path_cur
 else
 	buildA500 $build_target $build_type $path_cur
 fi

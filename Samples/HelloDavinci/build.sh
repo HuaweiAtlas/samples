@@ -6,7 +6,7 @@ build_type="Release"
 source $path_cur/../Common/scripts/build_tools.sh
 
 checkEnvs
-checkArgs "$@"
+checkArgsA35 "$@"
 
 if [ $build_target == "A300" ]; then	
 	buildA300 $build_target $build_type $path_cur

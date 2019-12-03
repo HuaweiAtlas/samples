@@ -35,6 +35,7 @@
 #define OUTPUT_ENGINE_H
 
 #include "hiaiengine/engine.h"
+#include "Common.h"
 
 #define DST_INPUT_SIZE  1
 #define DST_OUTPUT_SIZE 1

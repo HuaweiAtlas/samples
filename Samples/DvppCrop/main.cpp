@@ -31,10 +31,10 @@
  * ============================================================================
  */
 
+#include <cstdlib>
 #include <hiaiengine/api.h>
-#include <string.h>
+#include <cstring>
 #include <libgen.h>
-#include <string.h>
 #include "hiaiengine/api.h"
 #include "CommandLine.h"
 #include "CommandParser.h"
@@ -44,11 +44,17 @@
 #include "TransSear.h"
 #include "GraphManager.h"
 #include "FileManager.h"
+#include <securec.h>
+#include <regex>
+#include "EngineImageTrans.h"
 
 using namespace std;
 using namespace hiai;
 
 HIAI_REGISTER_SERIALIZE_FUNC("GraphCtrlInfoT", GraphCtrlInfoT, GetTransSearPtr, GetTransDearPtr);
+// register EngineImageTransT
+HIAI_REGISTER_SERIALIZE_FUNC("EngineImageTransT", EngineImageTransT, GetEngineImageTransPtr,
+                             GetEngineImageTransrPtr);
 
 // The following constants are parameters for graph
 // and must be consistent with the corresponding fields in the configuration file graph.config.
@@ -65,7 +71,7 @@ static const string JPEG_EXTENSION = "jpeg";
 static const string JPG_EXTENSION = "jpg";
 static const uint32_t BUFFER_LEN_OFFSET = 8;
 
-HIAI_StatusT HIAISendDataToDevice(shared_ptr<GraphManager> graphManager, const std::string &filePath)
+HIAI_StatusT HiaiSendDataToDevice(shared_ptr<GraphManager> graphManager, const std::string &filePath)
 {
     string inputFile = filePath;
 
@@ -87,7 +93,8 @@ HIAI_StatusT HIAISendDataToDevice(shared_ptr<GraphManager> graphManager, const s
     ctrlInfo->bufferSize = bufferLen;
 
     ctrlInfo->dataBuff = imageFileInfo.data;
-    HIAI_StatusT getRet = graphManager->SendData(GRAPH_ID, SRC_ENGINE_ID, "GraphCtrlInfoT", static_pointer_cast<void>(ctrlInfo));
+    HIAI_StatusT getRet = graphManager->SendData(GRAPH_ID, SRC_ENGINE_ID, "GraphCtrlInfoT",
+                                                 static_pointer_cast<void>(ctrlInfo));
     if (getRet != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Send data to device failed!");
         return HIAI_ERROR;
@@ -107,26 +114,31 @@ bool checkArgs(bool help, const std::string &filePath)
         ShowUsage();
         return false;
     }
+    char path[PATH_MAX + 1] = { 0x00 };
+    errno_t err = strcpy_s(path, PATH_MAX + 1, filePath.c_str());
+    if (err != EOK) {
+        printf("[ERROR] strcpy %s failed!\n", path);
+        return false;
+    }
 
-    if (-1 == access(filePath.c_str(), R_OK)) {
-        printf("[ERROR] Input file-- %s doesn't exit!\n", filePath.c_str());
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[ERROR] Input file-- %s doesn't exit!", filePath.c_str());
+    if (-1 == access(path, R_OK)) {
+        printf("[ERROR] Input file-- %s doesn't exit!\n", path);
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[ERROR] Input file-- %s doesn't exit!", path);
         return false;
     }
 
     return true;
 }
 
-bool ParseAndCheckArgs(int argc, char *argv[], std::string& filePath){
+bool ParseAndCheckArgs(int argc, char *argv[], std::string &filePath)
+{
     CommandParser options;
-    options
-            .addOption(HELP_CMD)
-            .addOption(INPUT_CMD, DEFAULT_INPUT);
+    options.addOption(g_HELP_CMD).addOption(g_INPUT_CMD, DEFAULT_INPUT);
 
     options.parseArgs(argc, argv);
 
-    bool help = options.cmdOptionExists(HELP_CMD);
-    filePath = options.cmdGetOption(INPUT_CMD);
+    bool help = options.cmdOptionExists(g_HELP_CMD);
+    filePath = options.cmdGetOption(g_INPUT_CMD);
     if (!checkArgs(help, filePath)) {
         return false;
     }
@@ -146,9 +158,11 @@ int main(int argc, char *argv[])
     printf("[main] The sample begins!\n");
     // change to executable file directory
     shared_ptr<FileManager> fileManager(new FileManager());
-    fileManager->ChangeDir(argv[0]);
 
-    //Parse input and check param
+    string path(argv[0], argv[0] + strlen(argv[0]));
+    fileManager->ChangeDir(path.c_str());
+
+    // Parse input and check param
     string filePath = "";
     if (!ParseAndCheckArgs(argc, argv, filePath)) {
         return false;
@@ -186,7 +200,7 @@ int main(int argc, char *argv[])
     }
 
     // 3.send data to device
-    ret = HIAISendDataToDevice(graphManager, filePath);
+    ret = HiaiSendDataToDevice(graphManager, filePath);
     if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Fail to get send data. ret = %d", ret);
         return -1;

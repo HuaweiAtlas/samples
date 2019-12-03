@@ -52,6 +52,8 @@ public:
  */
     HIAI_StatusT RecvData(const std::shared_ptr<void> &message);
 
+    ~CustomDataRecvInterface(){}
+
 private:
     std::string file_name_;
 };

@@ -31,8 +31,8 @@
  * ============================================================================
  */
 
-#ifndef _SAVEFILE_H_
-#define _SAVEFILE_H_
+#ifndef SAVEFILE_H
+#define SAVEFILE_H
 #include <iostream>
 #include <string>
 #include <dirent.h>
@@ -44,6 +44,7 @@
 #include "hiaiengine/multitype_queue.h"
 #include "TransSear.h"
 #include "Common.h"
+#include "EngineImageTrans.h"
 
 #define INPUT_SIZE  1
 #define OUTPUT_SIZE 1
