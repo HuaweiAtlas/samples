@@ -1,5 +1,11 @@
 project(host)
 
+if(${BUILD_TARGET} MATCHES "A200")
+    add_definitions(-DATLAS_DEVICE)
+else()
+    add_definitions(-DATLAS_HOST)
+endif()
+
 # copy graph.config file
 file(COPY ${PROJECT_SRC_ROOT}/graph.config
         DESTINATION ${CMAKE_BINARY_DIR})

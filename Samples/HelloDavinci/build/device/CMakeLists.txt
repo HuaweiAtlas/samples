@@ -1,9 +1,11 @@
 project(device)
 
+if(NOT ${BUILD_TARGET} MATCHES "A200")
+    include(${PROJECT_SRC_ROOT}/../CMake/Ascend.cmake)
+endif()
+
 # build for device
 # HelloDavinci
-
-include(${PROJECT_SRC_ROOT}/../CMake/Ascend.cmake)
 
 aux_source_directory(${PROJECT_SRC_ROOT}/HelloDavinci HelloDavinci_SRC)
 add_library(Device SHARED ${HelloDavinci_SRC})

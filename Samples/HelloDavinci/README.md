@@ -10,7 +10,7 @@ Process Framework
 
 ## Supported Products
 
-Atlas 300 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
+Atlas 200 (Model 3010), Atlas 300 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
 
 ## Supported Version
 
@@ -38,6 +38,14 @@ Note: the default run parameter of the compile script build.sh is "A300". It wil
 ./build.sh 
 ```
 
+Compile the Atlas 200 (Model 3010) program:
+```bash
+# 如果未安装 A200 的交叉编译器，请先安装编译器
+# if you do not have cross compiler for A200, please install before
+# apt-get install g++-aarch64-linux-gnu gcc-aarch64-linux-gnu
+# set DDK_HOME
+# export DDK_HOME=/path/to/ddk/of/A200
+./build.sh A200
 
 ## Execution
 

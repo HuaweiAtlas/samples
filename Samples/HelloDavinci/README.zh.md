@@ -10,7 +10,7 @@
 
 ## 支持的产品
 
-Atlas 300 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
+Atlas 200 (Model 3010), Atlas 300 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
 
 ## 支持的版本
 
@@ -38,6 +38,14 @@ npu-smi info
 ./build.sh 
 ```
 
+编译 Atlas 200 (Model 3010) 程序
+```bash
+# 如果未安装 A200 的交叉编译器，请先安装编译器
+# apt-get install g++-aarch64-linux-gnu gcc-aarch64-linux-gnu
+# DDK 指定
+# export DDK_HOME=/path/to/ddk/of/A200
+./build.sh A200
+```
 
 ## 运行
 
