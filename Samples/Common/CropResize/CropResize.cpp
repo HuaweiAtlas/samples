@@ -445,8 +445,8 @@ uint32_t CropResize::GetYuvOutputBufferSize(const std::shared_ptr<DecodeOutputIm
 
 void CropResize::CbFreeJpeg()
 {
-    jpegData.cbFree();
-    jpegData.yuvData = nullptr;
+    jpegdOutData.cbFree();
+    jpegdOutData.yuvData = nullptr;
 }
 
 CropResize::~CropResize()
