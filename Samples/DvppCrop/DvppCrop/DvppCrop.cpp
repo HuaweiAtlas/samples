@@ -83,39 +83,39 @@ HIAI_StatusT DvppCrop::CropImage(const std::shared_ptr<DecodeOutputImage> decode
                                  shared_ptr<CropResizeOutputImage> cropResizeOutputImage,
                                  const float resizeFactorW, const float resizeFactorH)
 {
-    // DvppµÄËõ·ÅÓë¿ÙÍ¼¶¼ÊÇµ÷ÓÃVPC½Ó¿Ú£¬ÎÞÂÛÊÇËõ·ÅºÍ¿ÙÍ¼£¬¶¼ÒªÉèÖÃ¿ÙÍ¼ºÍÌùÍ¼ÇøÓò
-    // ³ý8KËõ·Å¹¦ÄÜÍâ£¬¿ÙÍ¼ÇøÓòºÍÌùÍ¼ÇøÓò×îÐ¡·Ö±æÂÊÎª10*6£¬×î´ó·Ö±æÂÊÎª4096*4096
-    // 8KËõ·Å£¬×î´ó·Ö±æÂÊÖ§³Ö4096*4096~8192*8192£¬¸ñÊ½½öÖ§³Öyuv420£¬Êä³ö·Ö±æÂÊÖ§³Ö16*16~4096*4096
-    // CropArea ·â×°¿ÙÍ¼ºÍÌùÍ¼ÇøÓò²ÎÊýµÄ½á¹¹Ìå
+    // Dvppï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½Çµï¿½ï¿½ï¿½VPCï¿½Ó¿Ú£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÅºÍ¿ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½Ã¿ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½
+    // ï¿½ï¿½8Kï¿½ï¿½ï¿½Å¹ï¿½ï¿½ï¿½ï¿½â£¬ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½Ö±ï¿½ï¿½ï¿½Îª10*6ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½Îª4096*4096
+    // 8Kï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½Ö§ï¿½ï¿½4096*4096~8192*8192ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½Ö§ï¿½ï¿½yuv420ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½Ö§ï¿½ï¿½16*16~4096*4096
+    // CropArea ï¿½ï¿½×°ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä½á¹¹ï¿½ï¿½
     vector<CropArea> cropAreaArray;
     uint32_t blockWidth = (uint32_t)(decodeOutputImage->imgWidth * resizeFactorW) / CROP_NUM_COLROW;
     uint32_t blockHeigth = (uint32_t)(decodeOutputImage->imgHeight * resizeFactorH) / CROP_NUM_COLROW;
     uint32_t baseWidth = CHECK_ODD((uint32_t)(decodeOutputImage->imgWidth * resizeFactorW) - 1);
     uint32_t baseHeight = CHECK_ODD((uint32_t)(decodeOutputImage->imgHeight * resizeFactorH) - 1);
-    // ÒÔÏÂforÑ­»·ÊÇÉèÖÃ4¸ö¿ÙÍ¼²ÎÊý£¬½«¿ÙÍ¼²ÎÊýcropArea pushµ½cropAreaArray£¬¿ÉÒÔÒ»´ÎÐÔ½«¿Û4ÕÅÍ¼£¬Êä³öµ½µ×Í¼
-    // ÓÃ»§¿ÉÒÔ¸ù¾ÝÐèÇó×ÔÓÉÉèÖÃ¿ÙÍ¼ºÍÌùÍ¼ÇøÓò£¬Ò»´ÎÐÔ¿ÙÍ¼ÌùÍ¼µÄ×î´ó¸öÊýÎª256
+    // ï¿½ï¿½ï¿½ï¿½forÑ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½4ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½cropArea pushï¿½ï¿½cropAreaArrayï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ô½ï¿½ï¿½ï¿½4ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼
+    // ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ô¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ô¿ï¿½Í¼ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª256
     for (int i = 0; i < CROP_NUM_COLROW; i++) {
         for (int j = 0; j < CROP_NUM_COLROW; j++) {
             CropArea cropArea;
-            // ÒÔÏÂÎªÉèÖÃÁËÕûÕÅÔ­Í¼ÖÐÐÄµÄÒ»²¿·ÖÎª¿ÙÍ¼ÇøÓò£¬Êµ¼ÊÉÏ¿ÙÍ¼ÇøÓò¿ÉÒÔÁé»î±ä»¯£¬µ«±ØÐëÔÚÔ­Í¼ÄÚ
-            // ¿ÙÍ¼ÇøÓò£º¶ÔÔ­Í¼Ïñ½øÐÐ²Ù×÷µÄÇøÓò£¬ÇøÓò±ØÐëÔÚÔ­Í¼ÄÚ¡£decodeOutputImageÎª½âÂëÊä³ö£¬¼´ÎªVPCÔ­Í¼£¬
-            // ¿ÙÍ¼²ÎÊýcropLeftOffset(×óÆ«ÒÆ) cropRightOffset(ÓÒÆ«ÒÆ) cropUpOffset(ÉÏÆ«ÒÆ) cropDownOffset(ÏÂÆ«ÒÆ)
+            // ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­Í¼ï¿½ï¿½ï¿½Äµï¿½Ò»ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½Ï¿ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ä»¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­Í¼ï¿½ï¿½
+            // ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ò£º¶ï¿½Ô­Í¼ï¿½ï¿½ï¿½ï¿½Ð²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­Í¼ï¿½Ú¡ï¿½decodeOutputImageÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªVPCÔ­Í¼ï¿½ï¿½
+            // ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½cropLeftOffset(ï¿½ï¿½Æ«ï¿½ï¿½) cropRightOffset(ï¿½ï¿½Æ«ï¿½ï¿½) cropUpOffset(ï¿½ï¿½Æ«ï¿½ï¿½) cropDownOffset(ï¿½ï¿½Æ«ï¿½ï¿½)
             cropArea.cropLeftOffset = CHECK_EVEN(blockWidth / CROP_NUM_COLROW);
             cropArea.cropRightOffset = CHECK_ODD((uint32_t)decodeOutputImage->imgWidth - blockWidth / CROP_NUM_COLROW - 1);
             cropArea.cropUpOffset = CHECK_EVEN(blockHeigth / CROP_NUM_COLROW);
             cropArea.cropDownOffset = CHECK_ODD((uint32_t)decodeOutputImage->imgHeight - blockHeigth / CROP_NUM_COLROW - 1);
 
-            // ÌùÍ¼ÇøÓò£º¶Ô¿ÙÍ¼ÇøÓòÌùÔÚµ×Í¼ËÄ¸ö½ÇµÄÎ»ÖÃ, ÓÃ»§¿ÉÒÔ×ÔÓÉÉèÖÃ£¬Î»ÖÃ²»ÄÜ³¬¹ýÊä³öµ×Í¼µÄ·¶Î§
-            // ÒÔÏÂÌùÍ¼ÇøÓòÉèÖÃÎªËõ·ÅºóÍ¼Æ¬
-            // ¿ÙÍ¼²ÎÊýoutputLeftOffset(×óÆ«ÒÆ) outputRightOffset(ÓÒÆ«ÒÆ) outputUpOffset(ÉÏÆ«ÒÆ) outputDownOffset(ÏÂÆ«ÒÆ)
-            cropArea.outputLeftOffset = ALIGN_UP(i * blockWidth, WIDTH_ALIGNED);  // ±ØÐëÎª16¶ÔÆä
-            // ·ÀÖ¹ÌùÍ¼·¶Î§³¬¹ýµ×Í¼
+            // ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ò£º¶Ô¿ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½Í¼ï¿½Ä¸ï¿½ï¿½Çµï¿½Î»ï¿½ï¿½, ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½Î»ï¿½Ã²ï¿½ï¿½Ü³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½Ä·ï¿½Î§
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½Åºï¿½Í¼Æ¬
+            // ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½outputLeftOffset(ï¿½ï¿½Æ«ï¿½ï¿½) outputRightOffset(ï¿½ï¿½Æ«ï¿½ï¿½) outputUpOffset(ï¿½ï¿½Æ«ï¿½ï¿½) outputDownOffset(ï¿½ï¿½Æ«ï¿½ï¿½)
+            cropArea.outputLeftOffset = ALIGN_UP(i * blockWidth, WIDTH_ALIGNED);  // ï¿½ï¿½ï¿½ï¿½Îª16ï¿½ï¿½ï¿½ï¿½
+            // ï¿½ï¿½Ö¹ï¿½ï¿½Í¼ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼
             uint32_t tmpRightOffset = cropArea.outputLeftOffset + blockWidth - 1;
             uint32_t mapRightOffset = tmpRightOffset < baseWidth ? tmpRightOffset : baseWidth;
             cropArea.outputRightOffset = CHECK_ODD(mapRightOffset);
 
             cropArea.outputUpOffset = CHECK_EVEN(j * blockHeigth);
-            // ·ÀÖ¹ÌùÍ¼·¶Î§³¬¹ýµ×Í¼
+            // ï¿½ï¿½Ö¹ï¿½ï¿½Í¼ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼
             uint32_t tmpDownOffset = cropArea.outputUpOffset + blockHeigth - 1;
             uint32_t mapDownOffset = tmpDownOffset < baseHeight ? tmpDownOffset : baseHeight;
             cropArea.outputDownOffset = CHECK_ODD(mapDownOffset);
@@ -124,17 +124,17 @@ HIAI_StatusT DvppCrop::CropImage(const std::shared_ptr<DecodeOutputImage> decode
         }
     }
 
-    // ¼ÆËãËõ·ÅºóµÄ´óÐ¡
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½Ä´ï¿½Ð¡
     shared_ptr<CropResize> cropResize(new CropResize());
     uint32_t outBufferSize = cropResize->GetYuvOutputBufferSize(decodeOutputImage, resizeFactorW, resizeFactorH);
-    // ÓÃHIAI_DVPP_DMallocÉêÇëÄÚ´æ
+    // ï¿½ï¿½HIAI_DVPP_DMallocï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½
     uint8_t *outBuffer = (uint8_t *)HIAI_DVPP_DMalloc(outBufferSize);
 
     CropResizePara cropResizePara;
     for (int i = 0; i < cropAreaArray.size(); i++) {
         cropResizePara.cropAreaArray.push_back(cropAreaArray[i]);
     }
-    // ´ËËõ·Å²ÎÊý£¬¾ö¶¨¿ÙÍ¼Êä³öÍ¼Æ¬(µ×Í¼)µÄ³ß´ç£¬Çë×¢Òâ±£Ö¤ÌùÍ¼ÇøÓòÔÚµ×Í¼·¶Î§ÄÚ£¬·ñÔò±¨´í
+    // ï¿½ï¿½ï¿½ï¿½ï¿½Å²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½ï¿½Í¼Æ¬(ï¿½ï¿½Í¼)ï¿½Ä³ß´ç£¬ï¿½ï¿½×¢ï¿½â±£Ö¤ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½Í¼ï¿½ï¿½Î§ï¿½Ú£ï¿½ï¿½ï¿½ï¿½ò±¨´ï¿½
     cropResizePara.resizeFactorW = resizeFactorW;
     cropResizePara.resizeFactorH = resizeFactorH;
     cropResizePara.inputFormat = INPUT_YUV420_SEMI_PLANNER_VU;
@@ -142,7 +142,7 @@ HIAI_StatusT DvppCrop::CropImage(const std::shared_ptr<DecodeOutputImage> decode
     //
     cropResizeOutputImage->outBufferSize = outBufferSize;
     cropResizeOutputImage->outBuffer = outBuffer;
-    // µ÷ÓÃ·â×°ºÃµÄ·½·¨½øÐÐËõ·Å
+    // ï¿½ï¿½ï¿½Ã·ï¿½×°ï¿½ÃµÄ·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     HIAI_StatusT ret = cropResize->CropResizeImage(decodeOutputImage, cropResizePara, cropResizeOutputImage);
     if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JPEGDResize] Resize image failed");
@@ -172,10 +172,10 @@ HIAI_IMPL_ENGINE_PROCESS("DvppCrop", DvppCrop, INPUT_SIZE)
     }
 
     // crop and resize
-    // ¿í¸ßµÄËõ·ÅÏµÊý·¶Î§Îª[1/32, 16]
-    // ³ý8KËõ·Å¹¦ÄÜÍâ£¬[10*6£¬4096*4096] 8KËõ·Å½öÖ§³Öyuv420, ×î´ó·Ö±æÂÊ4096*4096~8192*8192,
-    // Êä³ö·Ö±æÂÊÖ§³Ö16*16~4096*4096
-    // ÓÃ»§ÔÚÉèÖÃ¿í¸ßËõ·ÅÏµÊýµÄÊ±ºò£¬³ýÁË¿¼ÂÇ[1/32, 16]£¬»¹Ó¦¿¼ÂÇÊä³öÊä³ö·Ö±æÂÊµÄÏÞÖÆ
+    // ï¿½ï¿½ï¿½ßµï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½Î§Îª[1/32, 16]
+    // ï¿½ï¿½8Kï¿½ï¿½ï¿½Å¹ï¿½ï¿½ï¿½ï¿½â£¬[10*6ï¿½ï¿½4096*4096] 8Kï¿½ï¿½ï¿½Å½ï¿½Ö§ï¿½ï¿½yuv420, ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½4096*4096~8192*8192,
+    // ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½Ö§ï¿½ï¿½16*16~4096*4096
+    // ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½Ê±ï¿½ò£¬³ï¿½ï¿½Ë¿ï¿½ï¿½ï¿½[1/32, 16]ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½
     float resizeFactorW = 1;
     float resizeFactorH = 1;
 
@@ -185,7 +185,9 @@ HIAI_IMPL_ENGINE_PROCESS("DvppCrop", DvppCrop, INPUT_SIZE)
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JPEGDResize] Resize image failed");
         return HIAI_ERROR;
     }
-
+    // free jpgd   
+    cropResize->CbFreeJpeg();
+    
     ret = SendDataToDst(cropResizeOutputImage);
     if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Send data to next engine falide.");

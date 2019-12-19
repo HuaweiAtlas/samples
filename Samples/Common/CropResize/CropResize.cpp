@@ -443,6 +443,12 @@ uint32_t CropResize::GetYuvOutputBufferSize(const std::shared_ptr<DecodeOutputIm
     return outWidthAligned * outHeightAligned * YUV_FACTOR / YUV_DIVISOR;
 }
 
+void CropResize::CbFreeJpeg()
+{
+    jpegData.cbFree();
+    jpegData.yuvData = nullptr;
+}
+
 CropResize::~CropResize()
 {
 }

@@ -147,6 +147,10 @@ HIAI_IMPL_ENGINE_PROCESS("JpegDecode", JpegDecode, JPEGD_RESIZE_INPUT_SIZE)
         HIAI_DVPP_DFree(outBuffer);
         return HIAI_ERROR;
     }
+
+    // free jpgd   
+    cropResize->CbFreeJpeg();
+
     ret = SendDataToDst(cropResizeOutputImage);
     if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JPEGDResize] Send data to next engine falide.");

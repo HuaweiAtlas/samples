@@ -197,7 +197,8 @@ public:
      */
     uint32_t GetYuvOutputBufferSize(const std::shared_ptr<DecodeOutputImage> decodeOutputImage,
                                     const float resizeFactorW, const float resizeFactorH);
-
+    // Free Jpgd
+    void CbFreeJpeg();
     ~CropResize();
 
 private:
