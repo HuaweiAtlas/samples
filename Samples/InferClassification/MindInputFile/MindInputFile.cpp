@@ -78,8 +78,10 @@ HIAI_IMPL_ENGINE_PROCESS("MindInputFile", MindInputFile, MIND_INPUT_SIZE)
     shared_ptr<FileManager> fileManager(new FileManager());
 
     FileInfo imageFileInfo = FileInfo();
-
-    bool readRet = fileManager->ReadFileWithDmalloc(imageInfo->filePath, imageFileInfo);
+    
+	// when decoding jpeg, the buf len should 8 larger, the driver asked.  
+	// Please refer to the DVPP manual for more details
+    bool readRet = fileManager->ReadFileWithDmallocOffset(imageInfo->filePath, imageFileInfo, BUFFER_LEN_OFFSET);
     if (!readRet) {
         printf("Read ImageFile error.");
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Read ImageFile error.");
@@ -100,7 +102,7 @@ HIAI_IMPL_ENGINE_PROCESS("MindInputFile", MindInputFile, MIND_INPUT_SIZE)
 
     tranData->trans_buff = imageFileInfo.data;
     tranData->buffer_size = bufferLen;
-    tranData->trans_buff_extend.reset(imageFileInfo.data.get() + bufferLen, DeleteNothing);
+    tranData->trans_buff_extend.reset(imageFileInfo.data.get(), DeleteNothing);
     tranData->buffer_size_extend = bufferLenExtend;
 
     if ("png" == imageInfo->imageType) {
