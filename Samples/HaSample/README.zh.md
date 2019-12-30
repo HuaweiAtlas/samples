@@ -1,9 +1,14 @@
 中文|[英文](README.md)
-# HA
+# HaSample
 
 ## 简介
 
-HA Sample
+本开发样例是一个热备容器参考demo, 用于演示HA功能中的热备场景。
+
+## 支持的产品
+Atlas 500（所有支持双机热备功能的版本）
+
+## 操作
 
 * 进入src目录，执行makefile进行编译。编译成功后，会在src下面生成明为"mbox-sample"的可执行文件
 

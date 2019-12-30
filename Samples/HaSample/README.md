@@ -1,9 +1,15 @@
 English|[Chinese](README.zh.md)
-# HA
+# HaSample
 
 ## Overview
 
-HA Sample
+This sample demonstrates the hot standby scenario in the HA functionality.
+
+## Supported Products
+
+Atlas 500(All versions that support dual-machine hot standby)
+
+## Operation
 
 * Go to the src directory and run the **makefile** command to compile the code. After the compilation is successful, an executable file named "mbox-sample" is generated in src.
 
