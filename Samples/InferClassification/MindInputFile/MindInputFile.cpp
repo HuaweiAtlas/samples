@@ -65,7 +65,7 @@ HIAI_IMPL_ENGINE_PROCESS("MindInputFile", MindInputFile, MIND_INPUT_SIZE)
 {
     HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[MindInputFile] start process!");
     printf("[MindInputFile] start process!\n");
-    if (ctrlInfoT == nullptr) {
+    if (arg0 == nullptr) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[MindInputFile] input arg invaild");
         return HIAI_ERROR;
     }

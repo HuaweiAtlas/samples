@@ -199,7 +199,7 @@ bool FileManager::ReadFileWithDmalloc(const string &dirPath, FileInfo &fileInfo)
         HIAI_StatusT ret = hiai::HIAIMemory::HIAI_DMalloc(fileSize, (void *&)buffer, DEMALLOC_TIMEOUT);
         if (ret != HIAI_OK) {
             if (buffer != nullptr) {
-                hiai::HIAIMemory::HIAI_DFree(p);
+                hiai::HIAIMemory::HIAI_DFree(buffer);
             }
             printf("Dmalloc Fail.");
             fclose(fp);
@@ -212,7 +212,7 @@ bool FileManager::ReadFileWithDmalloc(const string &dirPath, FileInfo &fileInfo)
         }
         size_t len = fread(buffer, 1, fileSize, fp);
         if (len < 0) {
-			hiai::HIAIMemory::HIAI_DFree(p);
+			hiai::HIAIMemory::HIAI_DFree(buffer);
             fclose(fp);
             return false;
         }
@@ -226,7 +226,7 @@ bool FileManager::ReadFileWithDmalloc(const string &dirPath, FileInfo &fileInfo)
 }
 
 // this only for jpeg decode
-bool FileManager::ReadFileWithDmallocOffset(const string &dirPath, FileInfo &fileInfo, static const uint32_t offSet)
+bool FileManager::ReadFileWithDmallocOffset(const string &dirPath, FileInfo &fileInfo, const uint32_t offSet)
 {
     char c[PATH_MAX + 1] = { 0x00 };
     errno_t err = strcpy_s(c, PATH_MAX + 1, dirPath.c_str());
@@ -254,7 +254,7 @@ bool FileManager::ReadFileWithDmallocOffset(const string &dirPath, FileInfo &fil
         HIAI_StatusT ret = hiai::HIAIMemory::HIAI_DMalloc(fileSize + offSet, (void *&)buffer, DEMALLOC_TIMEOUT);
         if (ret != HIAI_OK) {
             if (buffer != nullptr) {
-                hiai::HIAIMemory::HIAI_DFree(p);
+                hiai::HIAIMemory::HIAI_DFree(buffer);
             }
             printf("Dmalloc Fail.");
             fclose(fp);
@@ -267,7 +267,7 @@ bool FileManager::ReadFileWithDmallocOffset(const string &dirPath, FileInfo &fil
         }
         size_t len = fread(buffer, 1, fileSize, fp);
         if (len < 0) {
-			hiai::HIAIMemory::HIAI_DFree(p);
+			hiai::HIAIMemory::HIAI_DFree(buffer);
             fclose(fp);
             return false;
         }
