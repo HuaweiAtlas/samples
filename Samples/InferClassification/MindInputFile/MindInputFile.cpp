@@ -88,21 +88,13 @@ HIAI_IMPL_ENGINE_PROCESS("MindInputFile", MindInputFile, MIND_INPUT_SIZE)
         return false;
     }
     uint32_t fileLen = imageFileInfo.size;
-    uint32_t bufferLen = 0;
-    if (IMAGE_TYPE[TYPE_JPEG] == imageInfo->imageType) {
-		// when decoding jpeg, the buf len should 8 larger, the driver asked.  
-		// Please refer to the DVPP manual for more details
-        bufferLen = fileLen + BUFFER_LEN_OFFSET;
-    } else {
-        bufferLen = fileLen;
-    }
 
     // when user send two pieces of data, bufferLenExtend is the size of the second piece, otherwise it is 0.
     uint32_t bufferLenExtend = 0;
 
     tranData->trans_buff = imageFileInfo.data;
-    tranData->buffer_size = bufferLen;
-    tranData->trans_buff_extend.reset(imageFileInfo.data.get(), DeleteNothing);
+    tranData->buffer_size = fileLen;
+    tranData->trans_buff_extend.reset(imageFileInfo.data.get() + fileLen, DeleteNothing);
     tranData->buffer_size_extend = bufferLenExtend;
 
     if ("png" == imageInfo->imageType) {
