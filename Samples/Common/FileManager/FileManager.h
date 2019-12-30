@@ -70,5 +70,6 @@ public:
     bool ChangeDir(const char *dirPath);
     std::vector<std::string> SplitPath(const std::string &str, const std::set<char> delimiters);
     bool ReadFileWithDmalloc(const string &dirPath, FileInfo &fileInfo);
+	bool ReadFileWithDmallocOffset(const string &dirPath, FileInfo &fileInfo, static const uint32_t offSet);
 };
 #endif  // DVPPANDOPENCV_FILEMANAGER_H

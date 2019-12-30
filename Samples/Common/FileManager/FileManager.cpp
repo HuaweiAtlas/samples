@@ -199,19 +199,75 @@ bool FileManager::ReadFileWithDmalloc(const string &dirPath, FileInfo &fileInfo)
         HIAI_StatusT ret = hiai::HIAIMemory::HIAI_DMalloc(fileSize, (void *&)buffer, DEMALLOC_TIMEOUT);
         if (ret != HIAI_OK) {
             if (buffer != nullptr) {
-                delete buffer;
+                hiai::HIAIMemory::HIAI_DFree(p);
             }
-            printf("Demalloc Fail.");
+            printf("Dmalloc Fail.");
             fclose(fp);
             return false;
         }
         if (buffer == nullptr) {
-            printf("Demalloc Fail.");
+            printf("Dmalloc Fail.");
             fclose(fp);
             return false;
         }
         size_t len = fread(buffer, 1, fileSize, fp);
         if (len < 0) {
+			hiai::HIAIMemory::HIAI_DFree(p);
+            fclose(fp);
+            return false;
+        }
+        fileInfo.size = fileSize;
+        fileInfo.data = shared_ptr<uint8_t>(buffer, [](uint8_t *p) { hiai::HIAIMemory::HIAI_DFree(p); });
+        fclose(fp);
+        return true;
+    }
+    fclose(fp);
+    return false;
+}
+
+// this only for jpeg decode
+bool FileManager::ReadFileWithDmallocOffset(const string &dirPath, FileInfo &fileInfo, static const uint32_t offSet)
+{
+    char c[PATH_MAX + 1] = { 0x00 };
+    errno_t err = strcpy_s(c, PATH_MAX + 1, dirPath.c_str());
+    if (err != EOK) {
+        printf("[ERROR] strcpy %s failed!\n", c);
+        return false;
+    }
+    char path[PATH_MAX + 1] = { 0x00 };
+    if ((strlen(c) > PATH_MAX) || (realpath(c, path) == NULL)) {
+        printf("Get canonnicalize path fail!\n");
+        return false;
+    }
+    FILE *fp = fopen(path, "rb");
+    if (fp == nullptr) {
+        printf("Open file failed!");
+        return false;
+    }
+    fseek(fp, 0, SEEK_END);
+    long int fileSize = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    if (fileSize > 0) {
+        uint8_t *buffer = nullptr;
+		// when decoding jpeg, the buf len should 8 larger, the driver asked.  
+		// Please refer to the DVPP manual for more details
+        HIAI_StatusT ret = hiai::HIAIMemory::HIAI_DMalloc(fileSize + offSet, (void *&)buffer, DEMALLOC_TIMEOUT);
+        if (ret != HIAI_OK) {
+            if (buffer != nullptr) {
+                hiai::HIAIMemory::HIAI_DFree(p);
+            }
+            printf("Dmalloc Fail.");
+            fclose(fp);
+            return false;
+        }
+        if (buffer == nullptr) {
+            printf("Dmalloc Fail.");
+            fclose(fp);
+            return false;
+        }
+        size_t len = fread(buffer, 1, fileSize, fp);
+        if (len < 0) {
+			hiai::HIAIMemory::HIAI_DFree(p);
             fclose(fp);
             return false;
         }

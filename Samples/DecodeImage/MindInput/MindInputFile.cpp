@@ -89,7 +89,7 @@ HIAI_IMPL_ENGINE_PROCESS("MindInputFile", MindInputFile, MIND_INPUT_SIZE)
         std::make_shared<EngineImageTransT>();
     tranData->trans_buff = imageFileInfo.data;
     tranData->buffer_size = bufferLen;
-    tranData->trans_buff_extend.reset(imageFileInfo.data.get() + bufferLen, deleteNothing);
+    tranData->trans_buff_extend.reset(imageFileInfo.data.get() + bufferLen, DeleteNothing);
     tranData->buffer_size_extend = bufferLenExtend;
 
     HIAI_StatusT ret;

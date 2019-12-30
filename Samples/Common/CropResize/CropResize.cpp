@@ -47,7 +47,11 @@ const int TRANSFORM_CHANGE = 1;
  */
 HIAI_StatusT CropResize::DecodeJpeg(const uint32_t fileSize, const std::shared_ptr<uint8_t> dataBuff,
                                     std::shared_ptr<DecodeOutputImage> decodeOutputImage)
-{
+{   
+    if ((dataBuff == nullptr) || (decodeOutputImage == nullptr)) {
+		HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Input Parameter should not be NULL.\n");
+        return HIAI_ERROR;
+	}
     HIAI_ENGINE_LOG(HIAI_IDE_INFO, "DecodeJpeg process start !");
     jpegdInData.jpegDataSize = fileSize;
     jpegdInData.jpegData = (unsigned char *)(dataBuff.get());

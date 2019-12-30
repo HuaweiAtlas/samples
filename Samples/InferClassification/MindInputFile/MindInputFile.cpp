@@ -60,15 +60,15 @@ HIAI_StatusT MindInputFile::Init(const hiai::AIConfig &config,
     return HIAI_OK;
 }
 
-/**
-* @ingroup hiaiengine
-* @brief HIAI_DEFINE_PROCESS : Overloading Engine Process processing logic
-* @[in]: Define an input port, an output port
- */
+// Engine process 
 HIAI_IMPL_ENGINE_PROCESS("MindInputFile", MindInputFile, MIND_INPUT_SIZE)
 {
     HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[MindInputFile] start process!");
     printf("[MindInputFile] start process!\n");
+    if (ctrlInfoT == nullptr) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[MindInputFile] input arg invaild");
+        return HIAI_ERROR;
+    }
     std::shared_ptr<ImageInputInfoT> imageInfo = std::static_pointer_cast<ImageInputInfoT>(arg0);
 
     std::shared_ptr<EngineImageTransT> tranData = std::make_shared<EngineImageTransT>();
@@ -88,6 +88,8 @@ HIAI_IMPL_ENGINE_PROCESS("MindInputFile", MindInputFile, MIND_INPUT_SIZE)
     uint32_t fileLen = imageFileInfo.size;
     uint32_t bufferLen = 0;
     if (IMAGE_TYPE[TYPE_JPEG] == imageInfo->imageType) {
+		// when decoding jpeg, the buf len should 8 larger, the driver asked.  
+		// Please refer to the DVPP manual for more details
         bufferLen = fileLen + BUFFER_LEN_OFFSET;
     } else {
         bufferLen = fileLen;
@@ -98,7 +100,7 @@ HIAI_IMPL_ENGINE_PROCESS("MindInputFile", MindInputFile, MIND_INPUT_SIZE)
 
     tranData->trans_buff = imageFileInfo.data;
     tranData->buffer_size = bufferLen;
-    tranData->trans_buff_extend.reset(imageFileInfo.data.get() + bufferLen, deleteNothing);
+    tranData->trans_buff_extend.reset(imageFileInfo.data.get() + bufferLen, DeleteNothing);
     tranData->buffer_size_extend = bufferLenExtend;
 
     if ("png" == imageInfo->imageType) {

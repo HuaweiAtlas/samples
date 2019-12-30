@@ -57,12 +57,12 @@ HIAI_DEF_ERROR_CODE(USE_DEFINE_ERROR, HIAI_ERROR, HIAI_IDE_ERROR, "");
 HIAI_DEF_ERROR_CODE(USE_DEFINE_ERROR, HIAI_INFO, HIAI_IDE_INFO, "");
 HIAI_DEF_ERROR_CODE(USE_DEFINE_ERROR, HIAI_WARNING, HIAI_IDE_WARNING, "");
 
-static void deleteNothing(void *ptr)
+static void DeleteNothing(void *ptr)
 {
     // do nothing
 }
 
-static long getCurentTime()
+static long GetCurentTime()
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);
