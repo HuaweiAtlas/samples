@@ -165,13 +165,14 @@ void VDecEngine::FrameCallback(FRAME* frame, void* hiaiData)
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "hiaiData is NULL");
         return;
     }
-    vedcPtr->inputInfo.width = frame->realWidth;
-    vedcPtr->inputInfo.height = frame->realHeight;
-
+	
     uint8_t *outputBuffer = nullptr;
     uint32_t widthStride = ALIGN_UP(frame->width, DVPP_STRIDE_WIDTH);
     uint32_t heightStride = ALIGN_UP(frame->height, DVPP_STRIDE_HEIGHT);
+	
     uint32_t bufferSize = widthStride * heightStride * NUM_THREE / NUM_TWO;
+    vedcPtr->inputInfo.width = widthStride;
+    vedcPtr->inputInfo.height = heightStride;
 
     HIAI_StatusT ret = hiai::HIAIMemory::HIAI_DVPP_DMalloc(bufferSize, (void *&)outputBuffer);
 
