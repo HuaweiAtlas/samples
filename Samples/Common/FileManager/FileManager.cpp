@@ -271,7 +271,7 @@ bool FileManager::ReadFileWithDmallocOffset(const string &dirPath, FileInfo &fil
             fclose(fp);
             return false;
         }
-        fileInfo.size = fileSize;
+        fileInfo.size = fileSize + offSet;
         fileInfo.data = shared_ptr<uint8_t>(buffer, [](uint8_t *p) { hiai::HIAIMemory::HIAI_DFree(p); });
         fclose(fp);
         return true;
