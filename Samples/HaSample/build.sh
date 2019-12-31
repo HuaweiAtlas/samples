@@ -1,6 +1,9 @@
 #!/bin/bash
 
 if [ "$1" == "A500" ];then
-  cd ./src
-  make clean;make
+  rm -rf out
+  mkdir out
+  cd out
+  cmake ..
+  make
 fi
