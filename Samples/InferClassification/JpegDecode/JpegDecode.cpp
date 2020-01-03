@@ -127,6 +127,10 @@ HIAI_IMPL_ENGINE_PROCESS("JpegDecode", JpegDecode, JPEGD_RESIZE_INPUT_SIZE)
 
     uint8_t *outBuffer = nullptr;
     ret = hiai::HIAIMemory::HIAI_DVPP_DMalloc(outBufferSize, (void *&)outBuffer);
+    if (ret != HIAI_OK) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JPEGDResize] HIAI_DVPP_DMalloc failed");
+        return HIAI_ERROR;
+    }
 
     CropResizePara cropResizePara;
     for (int i = 0; i < cropAreaArray.size(); i++) {

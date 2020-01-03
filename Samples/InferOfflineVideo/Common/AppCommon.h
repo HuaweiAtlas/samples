@@ -71,7 +71,7 @@ static std::vector<std::string> splitpath(const std::string &str, const std::set
     return result;
 }
 
-static long getCurentTime()
+static long GetCurentTime()
 {
     struct timeval tv;
     gettimeofday(&tv, NULL);

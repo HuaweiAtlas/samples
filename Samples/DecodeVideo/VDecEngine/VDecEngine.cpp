@@ -47,6 +47,7 @@ using Stat = struct stat;
 
 const static int NUM_TWO = 2;
 const static int NUM_THREE = 3;
+const static int BIT_DEPTH8 = 8;
 
 HIAI_StatusT VDecEngine::Init(const hiai::AIConfig& config,
     const std::vector<hiai::AIModelDescription>& model_desc)
@@ -95,8 +96,20 @@ HIAI_StatusT VDecEngine::Hfbc2YuvNew(FRAME *frame,  uint8_t *outputBuffer)
     userImage->bareDataBufferSize = 0;
     userImage->widthStride = frame->width;
     userImage->heightStride = frame->height;
-    string imageFormat(frame->image_format);
-    userImage->inputFormat = INPUT_YUV420_SEMI_PLANNER_VU;
+    string imageFormat(frame->image_format); 
+	if (frame->bitdepth == BIT_DEPTH8) {
+		if (imageFormat == "nv12") {
+			userImage->inputFormat = INPUT_YUV420_SEMI_PLANNER_UV;
+		} else {
+			userImage->inputFormat = INPUT_YUV420_SEMI_PLANNER_VU;
+		}
+	} else {
+		if (imageFormat == "nv12") {
+			userImage->inputFormat = INPUT_YUV420_SEMI_PLANNER_UV_10BIT;
+		} else {
+			userImage->inputFormat = INPUT_YUV420_SEMI_PLANNER_VU_10BIT;
+		}
+	}
     userImage->outputFormat = OUTPUT_YUV420SP_UV;
     userImage->isCompressData = true;
     VpcCompressDataConfigure* compressDataConfigure = &userImage->compressDataConfigure;
@@ -152,13 +165,14 @@ void VDecEngine::FrameCallback(FRAME* frame, void* hiaiData)
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "hiaiData is NULL");
         return;
     }
-    vedcPtr->inputInfo.width = frame->realWidth;
-    vedcPtr->inputInfo.height = frame->realHeight;
-
+	
     uint8_t *outputBuffer = nullptr;
     uint32_t widthStride = ALIGN_UP(frame->width, DVPP_STRIDE_WIDTH);
     uint32_t heightStride = ALIGN_UP(frame->height, DVPP_STRIDE_HEIGHT);
+	
     uint32_t bufferSize = widthStride * heightStride * NUM_THREE / NUM_TWO;
+    vedcPtr->inputInfo.width = widthStride;
+    vedcPtr->inputInfo.height = heightStride;
 
     HIAI_StatusT ret = hiai::HIAIMemory::HIAI_DVPP_DMalloc(bufferSize, (void *&)outputBuffer);
 

@@ -42,6 +42,7 @@
 static const uint32_t NUM_TWO = 2;
 static const uint32_t NUM_THREE = 3;
 static const uint32_t DEST_MAX = 10;
+const static int BIT_DEPTH8 = 8;
 
 uint8_t g_channelId = 0;
 
@@ -89,7 +90,19 @@ void VDecEngine::ConstructVpcData(FRAME* frame, uint8_t* outputBuffer,
     userImage->widthStride = frame->width;
     userImage->heightStride = frame->height;
     string imageFormat(frame->image_format);
-    userImage->inputFormat = INPUT_YUV420_SEMI_PLANNER_VU;
+	if (frame->bitdepth == BIT_DEPTH8) {
+		if (imageFormat == "nv12") {
+			userImage->inputFormat = INPUT_YUV420_SEMI_PLANNER_UV;
+		} else {
+			userImage->inputFormat = INPUT_YUV420_SEMI_PLANNER_VU;
+		}
+	} else {
+		if (imageFormat == "nv12") {
+			userImage->inputFormat = INPUT_YUV420_SEMI_PLANNER_UV_10BIT;
+		} else {
+			userImage->inputFormat = INPUT_YUV420_SEMI_PLANNER_VU_10BIT;
+		}
+	}
     userImage->outputFormat = OUTPUT_YUV420SP_UV;
     userImage->isCompressData = true;
     VpcCompressDataConfigure* compressDataConfigure = &userImage->compressDataConfigure;

@@ -99,7 +99,7 @@ static std::shared_ptr<void> GetEngineImageTransrPtr(const char *ctrlPtr, const 
     uint32_t DataLen_extend = engine_trans_ptr->buffer_size_extend;
     if (dataPtr != nullptr) {
         (engine_trans_ptr->trans_buff).reset((const_cast<uint8_t *>(dataPtr)), hiai::HIAIMemory::HIAI_DFree);
-        (engine_trans_ptr->trans_buff_extend).reset((const_cast<uint8_t *>(dataPtr + DataLen)), deleteNothing);
+        (engine_trans_ptr->trans_buff_extend).reset((const_cast<uint8_t *>(dataPtr + DataLen)), DeleteNothing);
     }
     return std::static_pointer_cast<void>(engine_trans_ptr);
 }

@@ -60,15 +60,15 @@ HIAI_StatusT MindInputFile::Init(const hiai::AIConfig &config,
     return HIAI_OK;
 }
 
-/**
-* @ingroup hiaiengine
-* @brief HIAI_DEFINE_PROCESS : Overloading Engine Process processing logic
-* @[in]: Define an input port, an output port
- */
+// Engine process 
 HIAI_IMPL_ENGINE_PROCESS("MindInputFile", MindInputFile, MIND_INPUT_SIZE)
 {
     HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[MindInputFile] start process!");
     printf("[MindInputFile] start process!\n");
+    if (arg0 == nullptr) {
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[MindInputFile] input arg invaild");
+        return HIAI_ERROR;
+    }
     std::shared_ptr<ImageInputInfoT> imageInfo = std::static_pointer_cast<ImageInputInfoT>(arg0);
 
     std::shared_ptr<EngineImageTransT> tranData = std::make_shared<EngineImageTransT>();
@@ -78,30 +78,31 @@ HIAI_IMPL_ENGINE_PROCESS("MindInputFile", MindInputFile, MIND_INPUT_SIZE)
     shared_ptr<FileManager> fileManager(new FileManager());
 
     FileInfo imageFileInfo = FileInfo();
-
-    bool readRet = fileManager->ReadFileWithDmalloc(imageInfo->filePath, imageFileInfo);
+    
+	bool readRet = false;
+	if (IMAGE_TYPE[TYPE_JPEG] == imageInfo->imageType) {
+        // when decoding jpeg, the buf len should 8 larger, the driver asked.  
+	    // Please refer to the DVPP manual for more details
+        readRet = fileManager->ReadFileWithDmallocOffset(imageInfo->filePath, imageFileInfo, BUFFER_LEN_OFFSET);
+    } else {
+        readRet = fileManager->ReadFileWithDmalloc(imageInfo->filePath, imageFileInfo);
+    }
     if (!readRet) {
         printf("Read ImageFile error.");
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Read ImageFile error.");
         return false;
     }
     uint32_t fileLen = imageFileInfo.size;
-    uint32_t bufferLen = 0;
-    if (IMAGE_TYPE[TYPE_JPEG] == imageInfo->imageType) {
-        bufferLen = fileLen + BUFFER_LEN_OFFSET;
-    } else {
-        bufferLen = fileLen;
-    }
 
     // when user send two pieces of data, bufferLenExtend is the size of the second piece, otherwise it is 0.
     uint32_t bufferLenExtend = 0;
 
     tranData->trans_buff = imageFileInfo.data;
-    tranData->buffer_size = bufferLen;
-    tranData->trans_buff_extend.reset(imageFileInfo.data.get() + bufferLen, deleteNothing);
+    tranData->buffer_size = fileLen;
+    tranData->trans_buff_extend.reset(imageFileInfo.data.get() + fileLen, DeleteNothing);
     tranData->buffer_size_extend = bufferLenExtend;
 
-    if ("png" == imageInfo->imageType) {
+    if (IMAGE_TYPE[TYPE_PNG] == imageInfo->imageType) {
         ret = SendData(0, "EngineImageTransT", tranData);
     } else {
         ret = SendData(1, "EngineImageTransT", tranData);

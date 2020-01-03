@@ -144,7 +144,7 @@ HIAI_IMPL_ENGINE_PROCESS("DstEngine", DstEngine, DST_INPUT_SIZE)
 
    // create directory for saving result info
     MkdirP(RESULT_FOLDER);
-    string resultFile = RESULT_FOLDER + FILE_PRE_FIX + to_string(getCurentTime());
+    string resultFile = RESULT_FOLDER + FILE_PRE_FIX + to_string(GetCurentTime());
     string resultFileTxt = resultFile + ".txt";
     string resultFileJpg = resultFile + ".jpg";
 

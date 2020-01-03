@@ -156,6 +156,9 @@ HIAI_StatusT SendBatchImageInfo(const string dirPath, const string imageType, co
 
     vector<string> filesPath = fileManager->ReadByExtension(dirPath, imageTypeVector);
     for (int i = 0; i < filesPath.size(); i++) {
+		// Sleep for a while to prevent pictures from being sent too fast and causing data congestion later.
+		// Sleep time can be adjusted according to the time consumption of later business flows.
+		usleep(1000);
         HIAI_StatusT ret = SendOneImagInfo(filesPath[i], imageType, graphId, engineId, graphManager);
         if (ret != HIAI_OK) {
             HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Fail to start graph. ret = %d", ret);
@@ -176,7 +179,7 @@ int GetImageType(const string extension, const int32_t dvppType, string& imageTy
         }
 
         if ((extension == EXTENSION_PNG) && (dvppType != TYPE_PNG)) {
-            return -1;
+            return -2;
         }
     } else {
         if (extension == EXTENSION_JPEG || extension == EXTENSION_JPG) {

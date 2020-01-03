@@ -70,7 +70,7 @@ HIAI_IMPL_ENGINE_PROCESS("SaveFile", SaveFile, SAVE_INPUT_SIZE)
         return HIAI_ERROR;
     }
 
-    string resultFile = RESULT_FOLDER + FILE_PRE_FIX + to_string(getCurentTime()) + "_h_" + to_string(inputArg->height) + "_w_" + to_string(inputArg->width) + ".yuv";
+    string resultFile = RESULT_FOLDER + FILE_PRE_FIX + to_string(GetCurentTime()) + "_h_" + to_string(inputArg->height) + "_w_" + to_string(inputArg->width) + ".yuv";
     char c[PATH_MAX + 1] = { 0x00 };
     errno_t err = strcpy_s(c, PATH_MAX + 1, resultFile.c_str());
     if (err != EOK) {
