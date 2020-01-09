@@ -118,7 +118,7 @@ HIAI_StatusT CropResize::DecodePng(const uint32_t fileSize, const std::shared_pt
 	
     outputPngData.address = HIAI_DVPP_DMalloc(outputPngData.size);
     if (outputPngData.address == nullptr) {
-        HIAI_ENGINE_LOG(HIAI_PNGD_CTL_ERROR, "can not alloc output buffer");
+        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "can not alloc output buffer");
         return HIAI_ERROR;
     }
 
