@@ -18,5 +18,6 @@ omg --framework 0 --model ./ResNet-50-deploy.prototxt --weight ./ResNet-50-model
 
 ##### Versions that have been verified: 
 
-- Atlas 300
-- Atlas 500
+- Atlas 800 (Model 3000)
+- Atlas 300 (Model 3010)
+- Atlas 500 (Model 3010)

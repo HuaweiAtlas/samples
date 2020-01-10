@@ -19,5 +19,6 @@ omg --framework 0 --model ./deploy.prototxt --weight ./VGG_coco_SSD_300x300.caff
 
 ##### Versions that have been verified: 
 
-- Atlas 300
-- Atlas 500
+- Atlas 800 (Model 3000)
+- Atlas 300 (Model 3010)
+- Atlas 500 (Model 3010)
