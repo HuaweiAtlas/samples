@@ -68,12 +68,12 @@ HIAI_StatusT VDecEngine::Init(const hiai::AIConfig& config, const std::vector<hi
 VDecEngine::~VDecEngine()
 {
     if (pVdecHandle != NULL) {
-        HIAI_ENGINE_LOG(HIAI_ERROR, "destroy dvpp api!");
+        HIAI_ENGINE_LOG(HIAI_INFO, "destroy dvpp api!");
         DestroyVdecApi(pVdecHandle, 0);
         pVdecHandle = NULL;
     }
     if (pDvppHandle != NULL) {
-        HIAI_ENGINE_LOG(HIAI_ERROR, "destroy dvpp api!");
+        HIAI_ENGINE_LOG(HIAI_INFO, "destroy dvpp api!");
         DestroyDvppApi(pDvppHandle);
         pDvppHandle = NULL;
     }

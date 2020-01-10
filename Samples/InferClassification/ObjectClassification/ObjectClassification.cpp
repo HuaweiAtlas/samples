@@ -116,12 +116,12 @@ HIAI_IMPL_ENGINE_PROCESS("ObjectClassification", ObjectClassification, CLASSIFIC
 {
     HIAI_StatusT ret = HIAI_OK;
     if (arg0 != nullptr) {
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "ObjectClassification received frame data");
+        HIAI_ENGINE_LOG(HIAI_IDE_INFO, "ObjectClassification received frame data");
         auto inputArg = std::static_pointer_cast<DeviceStreamData>(arg0);
 
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "widthAligned %d heightAligned %d", inputArg->imgOrigin.widthAligned,
+        HIAI_ENGINE_LOG(HIAI_IDE_INFO, "widthAligned %d heightAligned %d", inputArg->imgOrigin.widthAligned,
                         inputArg->imgOrigin.heightAligned);
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "width %d height %d", inputArg->imgOrigin.width, inputArg->imgOrigin.height);
+        HIAI_ENGINE_LOG(HIAI_IDE_INFO, "width %d height %d", inputArg->imgOrigin.width, inputArg->imgOrigin.height);
 
         uint8_t *dataBufferPtr = inputDataBuffer[0].get();
 
@@ -144,7 +144,7 @@ HIAI_IMPL_ENGINE_PROCESS("ObjectClassification", ObjectClassification, CLASSIFIC
 
             GetOutputResult(outputTensorVec, det);
         }
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "ObjectClassification send data to JpegEncode");
+        HIAI_ENGINE_LOG(HIAI_IDE_INFO, "ObjectClassification send data to JpegEncode");
         SendData(0, "DeviceStreamData", inputArg);
     }
 

@@ -48,7 +48,7 @@ using std::vector;
 HIAI_StatusT SSDDetection::Init(const hiai::AIConfig &config,
                                 const std::vector<hiai::AIModelDescription> &model_desc)
 {
-    HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[SSDDetection] start init!");
+    HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[SSDDetection] start init!");
     if (modelManager == nullptr) {
         modelManager = std::make_shared<hiai::AIModelManager>();
     }
@@ -98,7 +98,7 @@ HIAI_StatusT SSDDetection::Init(const hiai::AIConfig &config,
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[SSDDetection] creat output tensors failed!");
         return HIAI_ERROR;
     }
-    HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[SSDDetection] end init!");
+    HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[SSDDetection] end init!");
     return HIAI_OK;
 }
 
@@ -114,7 +114,7 @@ HIAI_IMPL_ENGINE_PROCESS("SSDDetection", SSDDetection, DT_INPUT_SIZE)
     inputArgQueue.push_back(std::move(inputArg));
     // waiting for batch data
     if (inputArgQueue.size() < kBatchSize) {
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR,
+        HIAI_ENGINE_LOG(HIAI_IDE_INFO,
                         "Collecting batch data, in queue, current size %d", inputArgQueue.size());
         return HIAI_OK;
     }

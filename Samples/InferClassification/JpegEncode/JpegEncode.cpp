@@ -53,7 +53,7 @@ HIAI_StatusT JpegEncode::Init(const hiai::AIConfig &config,
 
 HIAI_IMPL_ENGINE_PROCESS("JpegEncode", JpegEncode, JC_INPUT_SIZE)
 {
-    HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JpegEncode] start process!");
+    HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[JpegEncode] start process!");
     if (arg0 == nullptr) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JpegEncode]  The input arg0 is nullptr");
         return HIAI_ERROR;
@@ -62,7 +62,7 @@ HIAI_IMPL_ENGINE_PROCESS("JpegEncode", JpegEncode, JC_INPUT_SIZE)
     HIAI_StatusT ret;
     // the stream is end
     if (deviceStreamData->info.isEOS) {
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JpegEncode]  The stream is end");
+        HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[JpegEncode]  The stream is end");
         ret = SendData(0, "DeviceStreamData", deviceStreamData);
         return HIAI_OK;
     }
