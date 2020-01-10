@@ -53,7 +53,7 @@ cd out
     -d         Optional. Specify the dvpp type. default: -1.
                     0 - decode jpeg
                     1 - decode png
-               Jpeg resolutions: maximum 8192 x 8192, minimum 32 x 32.
+               Jpeg resolutions: maximum 4096 x 4096, minimum 32 x 32.
                Png  resolutions: maximum 4096 x 4096, minimum 32 x 32.
                
 对文件夹../data下所有的jpeg图片进行解码和缩放

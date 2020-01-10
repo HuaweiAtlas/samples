@@ -45,7 +45,7 @@ cd out
     -h                         Print a usage message.
     -i  '<path>'               Optional. Specify the image, this sample only support jpeg format.
                                Default: ../data/test.jpeg. 
-                               Resolutions constraint: maximum 8192 x 8192, minimum 32 x 32.
+                               Resolutions constraint: maximum 4096 x 4096, minimum 32 x 32.
 对图片../data/test.jpeg进行解码和抠图
 ```bash
 cd out

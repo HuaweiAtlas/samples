@@ -53,7 +53,7 @@ cd out
     -d         Optional. Specify the dvpp type. Default: -1.
                     0 - decode JPEG
                     1 - decode PNG
-               Jpeg resolutions: maximum 8192 x 8192, minimum 32 x 32.
+               Jpeg resolutions: maximum 4096 x 4096, minimum 32 x 32.
                Png  resolutions: maximum 4096 x 4096, minimum 32 x 32.
                     
 Decode and resize all JPEG images in the ../data folder:
