@@ -37,17 +37,22 @@
 #include "hiaiengine/log.h"
 #include "hiaiengine/c_graph.h"
 
+// 抠图行数
 static const uint32_t CROP_NUM_COLROW = 2;
 
+/**
+* @brief HIAI_DVPP_DFree的释放函数
+* @param[in]: ptr, 释放指针
+ */
 void ReleaseHiaiDFreeBuffer(void *ptr)
 {
     hiai::HIAIMemory::HIAI_DVPP_DFree(ptr);
 }
 
 /**
-* @ingroup hiaiengine
-* @brief HIAI_DEFINE_PROCESS : implementaion of the engine
-* @[in]: engine name and the number of input
+* @brief engine初始化函数
+* @param[in]: config，engine配置参数
+* @param[in]: model_desc模型描述信息结构体
  */
 HIAI_StatusT DvppCrop::Init(const hiai::AIConfig &config,
                             const std::vector<hiai::AIModelDescription> &model_desc)
@@ -55,6 +60,10 @@ HIAI_StatusT DvppCrop::Init(const hiai::AIConfig &config,
     return HIAI_OK;
 }
 
+/**
+* @brief 发送到下一个engine
+* @param[in]: cropResizeOutputImage，解码抠图得到的数据
+ */
 HIAI_StatusT DvppCrop::SendDataToDst(const shared_ptr<CropResizeOutputImage> cropResizeOutputImage)
 {
     HIAI_ENGINE_LOG(HIAI_IDE_INFO, "begin send\n");
@@ -79,43 +88,50 @@ HIAI_StatusT DvppCrop::SendDataToDst(const shared_ptr<CropResizeOutputImage> cro
     return HIAI_OK;
 }
 
+/**
+* @brief 调用Dvpp进行抠图
+* @param[in]: decodeOutputImage，解码输出数据
+* @param[in]: cropResizeOutputImage，抠图输出数据
+* @param[in]: resizeFactorW，宽的缩放系数
+* @param[in]: resizeFactorH，高的缩放系数
+ */
 HIAI_StatusT DvppCrop::CropImage(const std::shared_ptr<DecodeOutputImage> decodeOutputImage,
                                  shared_ptr<CropResizeOutputImage> cropResizeOutputImage,
                                  const float resizeFactorW, const float resizeFactorH)
 {
-    // Dvpp���������ͼ���ǵ���VPC�ӿڣ����������źͿ�ͼ����Ҫ���ÿ�ͼ����ͼ����
-    // ��8K���Ź����⣬��ͼ�������ͼ������С�ֱ���Ϊ10*6�����ֱ���Ϊ4096*4096
-    // 8K���ţ����ֱ���֧��4096*4096~8192*8192����ʽ��֧��yuv420������ֱ���֧��16*16~4096*4096
-    // CropArea ��װ��ͼ����ͼ��������Ľṹ��
+    // Dvpp的缩放与抠图都是调用VPC接口， 无论是缩放还是抠图，都要设置抠图和贴图区域
+    // 除了8K缩放，抠图和贴图区域最小分辨率为10*6，最大分辨率为4096*4096
+    // 8K缩放，最大分辨率支持4096*4096~8192*8192，格式仅支持yuv420，输出分辨率支持16*16~4096*4096
+    // CropArea 封装抠图和贴图区域参数的结构体
     vector<CropArea> cropAreaArray;
     uint32_t blockWidth = (uint32_t)(decodeOutputImage->imgWidth * resizeFactorW) / CROP_NUM_COLROW;
     uint32_t blockHeigth = (uint32_t)(decodeOutputImage->imgHeight * resizeFactorH) / CROP_NUM_COLROW;
     uint32_t baseWidth = CHECK_ODD((uint32_t)(decodeOutputImage->imgWidth * resizeFactorW) - 1);
     uint32_t baseHeight = CHECK_ODD((uint32_t)(decodeOutputImage->imgHeight * resizeFactorH) - 1);
-    // ����forѭ��������4����ͼ����������ͼ����cropArea push��cropAreaArray������һ���Խ���4��ͼ���������ͼ
-    // �û����Ը��������������ÿ�ͼ����ͼ����һ���Կ�ͼ��ͼ��������Ϊ256
+    // 以下for循环是设置4个抠图参数，将抠图参数cropArea push到cropAreaArray，可以一次性扣4张图，输出到同一张底图
+    // 用户可以根据需求自由设置抠图和贴图区域，贴图区域可以输出到不同的底图，本例放置于同一张底图
     for (int i = 0; i < CROP_NUM_COLROW; i++) {
         for (int j = 0; j < CROP_NUM_COLROW; j++) {
             CropArea cropArea;
-            // ����Ϊ����������ԭͼ���ĵ�һ����Ϊ��ͼ����ʵ���Ͽ�ͼ����������仯����������ԭͼ��
-            // ��ͼ���򣺶�ԭͼ����в������������������ԭͼ�ڡ�decodeOutputImageΪ�����������ΪVPCԭͼ��
-            // ��ͼ����cropLeftOffset(��ƫ��) cropRightOffset(��ƫ��) cropUpOffset(��ƫ��) cropDownOffset(��ƫ��)
+            // 以下为设置了整张原图中心的一部分为抠图区域，实际上抠图区域可以灵活变化，但必须在原图内
+            // 抠图区域：对原图像进行操作的区域， 区域必须在原图内，decodeOutputImage为解码输出， 即为VPC原图
+            // 抠图参数cropLeftOffset(左偏移) cropRightOffset(右偏移) cropUpOffset(上偏移) cropDownOffset(下偏移)
             cropArea.cropLeftOffset = CHECK_EVEN(blockWidth / CROP_NUM_COLROW);
             cropArea.cropRightOffset = CHECK_ODD((uint32_t)decodeOutputImage->imgWidth - blockWidth / CROP_NUM_COLROW - 1);
             cropArea.cropUpOffset = CHECK_EVEN(blockHeigth / CROP_NUM_COLROW);
             cropArea.cropDownOffset = CHECK_ODD((uint32_t)decodeOutputImage->imgHeight - blockHeigth / CROP_NUM_COLROW - 1);
 
-            // ��ͼ���򣺶Կ�ͼ�������ڵ�ͼ�ĸ��ǵ�λ��, �û������������ã�λ�ò��ܳ��������ͼ�ķ�Χ
-            // ������ͼ��������Ϊ���ź�ͼƬ
-            // ��ͼ����outputLeftOffset(��ƫ��) outputRightOffset(��ƫ��) outputUpOffset(��ƫ��) outputDownOffset(��ƫ��)
-            cropArea.outputLeftOffset = ALIGN_UP(i * blockWidth, WIDTH_ALIGNED);  // ����Ϊ16����
-            // ��ֹ��ͼ��Χ������ͼ
+            // 贴图区域：对抠图区域贴在底图的四个角位置，用户可以自由设置，但位置不能超过底图的范围
+            // 以下贴图区域设置为缩放后的图片
+            // 贴图参数outputLeftOffset(左偏移) outputRightOffset(右偏移) outputUpOffset(上偏移) outputDownOffset(下偏移)
+            cropArea.outputLeftOffset = ALIGN_UP(i * blockWidth, WIDTH_ALIGNED);  // 必须为WIDTH_ALIGNED对齐
+            // 防止贴图范围超过底图
             uint32_t tmpRightOffset = cropArea.outputLeftOffset + blockWidth - 1;
             uint32_t mapRightOffset = tmpRightOffset < baseWidth ? tmpRightOffset : baseWidth;
             cropArea.outputRightOffset = CHECK_ODD(mapRightOffset);
 
             cropArea.outputUpOffset = CHECK_EVEN(j * blockHeigth);
-            // ��ֹ��ͼ��Χ������ͼ
+            // 防止贴图范围超过底图
             uint32_t tmpDownOffset = cropArea.outputUpOffset + blockHeigth - 1;
             uint32_t mapDownOffset = tmpDownOffset < baseHeight ? tmpDownOffset : baseHeight;
             cropArea.outputDownOffset = CHECK_ODD(mapDownOffset);
@@ -124,17 +140,17 @@ HIAI_StatusT DvppCrop::CropImage(const std::shared_ptr<DecodeOutputImage> decode
         }
     }
 
-    // �������ź�Ĵ�С
+    // 计算缩放后大小
     shared_ptr<CropResize> cropResize(new CropResize());
     uint32_t outBufferSize = cropResize->GetYuvOutputBufferSize(decodeOutputImage, resizeFactorW, resizeFactorH);
-    // ��HIAI_DVPP_DMalloc�����ڴ�
+    // 用HIAI_DVPP_DMalloc申请内存
     uint8_t *outBuffer = (uint8_t *)HIAI_DVPP_DMalloc(outBufferSize);
 
     CropResizePara cropResizePara;
     for (int i = 0; i < cropAreaArray.size(); i++) {
         cropResizePara.cropAreaArray.push_back(cropAreaArray[i]);
     }
-    // �����Ų�����������ͼ���ͼƬ(��ͼ)�ĳߴ磬��ע�Ᵽ֤��ͼ�����ڵ�ͼ��Χ�ڣ����򱨴�
+    // 此缩放参数，决定抠图输出图片(底图)的尺寸，请注意保证贴图区域在底图范围内，否则报错
     cropResizePara.resizeFactorW = resizeFactorW;
     cropResizePara.resizeFactorH = resizeFactorH;
     cropResizePara.inputFormat = INPUT_YUV420_SEMI_PLANNER_VU;
@@ -142,7 +158,7 @@ HIAI_StatusT DvppCrop::CropImage(const std::shared_ptr<DecodeOutputImage> decode
     //
     cropResizeOutputImage->outBufferSize = outBufferSize;
     cropResizeOutputImage->outBuffer = outBuffer;
-    // ���÷�װ�õķ�����������
+    // 调用封装好的方法进行缩放
     HIAI_StatusT ret = cropResize->CropResizeImage(decodeOutputImage, cropResizePara, cropResizeOutputImage);
     if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JPEGDResize] Resize image failed");

@@ -147,7 +147,8 @@ HIAI_IMPL_ENGINE_PROCESS("PngDecode", PngDecode, PNGD_INPUT_SIZE)
         return HIAI_ERROR;
     }
     ret = SendDataToDst(cropResizeOutputImage);
-
+	
+    cropResize->CbFreePng();
     if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[PNGDResize] Send data to next engine falide.");
         return HIAI_ERROR;
