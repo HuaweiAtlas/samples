@@ -50,7 +50,7 @@ HIAI_REGISTER_DATA_TYPE("ResultInfoT", ResultInfoT);
 
 HIAI_StatusT VDecEngine::Init(const hiai::AIConfig& config, const std::vector<hiai::AIModelDescription>& model_desc)
 {
-    HIAI_ENGINE_LOG(this, HIAI_IDE_INFO, "[VDecEngine] init start.");
+    HIAI_ENGINE_LOG(this, HIAI_IDE_ERROR, "[VDecEngine] init start.");
     if (pVdecHandle == nullptr) {
         int ret = CreateVdecApi(pVdecHandle, 0);
         if (ret != 0 || pVdecHandle == nullptr) {
@@ -177,7 +177,7 @@ void VDecEngine::frameCallback(FRAME* frame, void* hiai_data)
 
     // call vpc interface to decompress hfbc
     vdecPtr->Hfbc2YuvNew(frame, outputBuffer);
-    HIAI_ENGINE_LOG(HIAI_IDE_INFO, "Vdec success!");
+    HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "Vdec success!");
     if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_ERROR, "Vdec failed");
     }

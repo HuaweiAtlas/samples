@@ -14,11 +14,11 @@ Process Framework
 
 ## Supported Products
 
-Atlas 800 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
+Atlas 300 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
 
 ## Supported Version
 
-1.3.T33.B890 1.3.2.B893 1.3.5.B896 1.31.T12.B120 1.31.T15.B150
+1.3.T33.B890 1.3.2.B893 1.31.T12.B120 1.31.T15.B150
 
 Run the following command to check the version in the environment where the Atlas product is installed:
 ```bash
@@ -27,11 +27,11 @@ npu-smi info
 
 ## Dependency
 
-  The input model is Resnet50. Please refer to [model transformation instructions](data/models/README.md) to transform the model.
+  The input model is Resnet50. Please refer to [model transformation instructions](/data/ readme.md) to transform the model.
 
 ## Compilation
 
-Compile the Atlas 800 (Model 3000) or Atlas 300 (Model 3010) program:
+Compile the Atlas 300 (Model 3000) or Atlas 300 (Model 3010) program:
 ```bash
 ./build.sh A300
 ```

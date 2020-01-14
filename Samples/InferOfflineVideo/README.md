@@ -10,11 +10,11 @@ Process Framework
 
 ## Supported Products
 
-Atlas 200 (Model 3000), Atlas 800 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
+Atlas 200 (Model 3010), Atlas 300 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
 
 ## Supported Version
 
-1.3.T33.B890 1.3.2.B893 1.3.5.B896 1.31.T12.B120 1.31.T15.B150
+1.3.T33.B890 1.3.2.B893 1.31.T12.B120 1.31.T15.B150
 
 Run the following command to check the version in the environment where the Atlas product is installed:
 ```bash
@@ -36,13 +36,13 @@ The path of 'ffmpeg' needs to be exported to the environment variable 'FFMPEG_PA
 export FFMPEG_PATH=/path/to/ffmpeg
 ```
 
-## model convert
+- model convert
 
-Download and convert related models by referring to [model transformation instructions](data/models/README.md).
+Download and convert related models by referring to data\models\README.md.
 
 ## Compilation
 
-Compile the Atlas 800 (Model 3000) or Atlas 300 (Model 3010) program:
+Compile the Atlas 300 (Model 3000) or Atlas 300 (Model 3010) program:
 ```bash
 ./build.sh A300
 ```
@@ -57,7 +57,7 @@ Note: the default run parameter of the compile script build.sh is "A300". It wil
 ./build.sh 
 ```
 
-Compile the Atlas 200 (Model 3000) program:
+Compile the Atlas 200 (Model 3010) program:
 ```bash
 # 如果未安装 A200 的交叉编译器，请先安装编译器
 # if you do not have cross compiler for A200, please install before

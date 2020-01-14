@@ -39,7 +39,7 @@ using namespace std;
 static const char g_HELP_MESSAGE[] = "Print a usage message.";
 static const char g_INPUT_MESSAGE[] =
     "Optional. Specify the image, this sample only support jpeg format. default: ../data/test.jpeg."
-    "                               Resolutions constraint: maximum 4096 x 4096, minimum 32 x 32.";
+    "                               Resolutions constraint: maximum 8192 x 8192, minimum 32 x 32.";
 
 static const string g_HELP_CMD = "-h";
 static const string g_INPUT_CMD = "-i";

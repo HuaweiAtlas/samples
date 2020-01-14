@@ -135,7 +135,7 @@ HIAI_IMPL_ENGINE_PROCESS("VencEngine", VencEngine, INPUT_SIZE)
 
     DestroyVenc(vencHandle);
     
-    HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[VideoEncode INFO] process end");
+    HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[VideoEncode INFO] process end");
     
     return HIAI_OK;
 } 

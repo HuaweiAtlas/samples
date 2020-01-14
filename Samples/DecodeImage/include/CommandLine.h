@@ -69,7 +69,7 @@ static void ShowUsage()
     printf("    -d                         %s\n", D_MESSAGE);
     printf("                                   0 - decode jpeg\n");
     printf("                                   1 - decode png \n");
-    printf("                               Jpeg resolutions: maximum 4096 x 4096, minimum 32 x 32.\n");
+    printf("                               Jpeg resolutions: maximum 8192 x 8192, minimum 32 x 32.\n");
     printf("                               Png  resolutions: maximum 4096 x 4096, minimum 32 x 32.\n");
 }
 
