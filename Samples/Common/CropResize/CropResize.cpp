@@ -108,21 +108,8 @@ HIAI_StatusT CropResize::DecodePng(const uint32_t fileSize, const std::shared_pt
     dvppapiCtlMsg.in_size = sizeof(inputPngData);
     dvppapiCtlMsg.out = (void*)&outputPngData;
     dvppapiCtlMsg.out_size = sizeof(outputPngData);
-	
-    int ret = DvppGetOutParameter((void*)(&inputPngData), 
-	    (void*)(&outputPngData), GET_PNGD_OUT_PARAMETER);
-	if (ret != 0) {
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "call DvppGetOutParameter process failed");
-        return HIAI_ERROR;
-    }
-	
-    outputPngData.address = HIAI_DVPP_DMalloc(outputPngData.size);
-    if (outputPngData.address == nullptr) {
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "can not alloc output buffer");
-        return HIAI_ERROR;
-    }
 
-    ret = CreateDvppApi(pidvppapi);
+    int ret = CreateDvppApi(pidvppapi);
     if (ret != 0) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "create dvpp api fail.\n");
         return HIAI_ERROR;
@@ -464,12 +451,6 @@ void CropResize::CbFreeJpeg()
 {
     jpegdOutData.cbFree();
     jpegdOutData.yuvData = nullptr;
-}
-
-void CropResize::CbFreePng()
-{
-    HIAI_DVPP_DFree(outputPngData.address);
-    outputPngData.address = nullptr;
 }
 
 CropResize::~CropResize()

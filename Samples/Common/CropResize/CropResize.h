@@ -199,10 +199,6 @@ public:
                                     const float resizeFactorW, const float resizeFactorH);
     // Free Jpgd
     void CbFreeJpeg();
-	
-    // Free PngD
-    void CbFreePng();
-	
     ~CropResize();
 
 private:
