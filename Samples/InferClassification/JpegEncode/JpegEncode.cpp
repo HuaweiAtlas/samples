@@ -80,7 +80,8 @@ HIAI_IMPL_ENGINE_PROCESS("JpegEncode", JpegEncode, JC_INPUT_SIZE)
     //    JPGENC_FORMAT_NV21 = 0x11,
     inData.format = JPGENC_FORMAT_NV12;
     inData.level = 100;
-    inData.alignMethod = 0; //init 0, The value will be assigned again in func Encode. 
+    // alignMethod  0: 128*16  1: 16*2.  Please be consistent with the decoding
+    inData.alignMethod = 1; 
     ret = dvppJpegEapi->Encode(inData, outData);
     if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JpegEncode]  failed to encode jpeg!");
