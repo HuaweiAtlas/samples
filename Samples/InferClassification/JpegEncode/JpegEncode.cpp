@@ -53,7 +53,7 @@ HIAI_StatusT JpegEncode::Init(const hiai::AIConfig &config,
 
 HIAI_IMPL_ENGINE_PROCESS("JpegEncode", JpegEncode, JC_INPUT_SIZE)
 {
-    HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JpegEncode] start process!");
+    HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[JpegEncode] start process!");
     if (arg0 == nullptr) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JpegEncode]  The input arg0 is nullptr");
         return HIAI_ERROR;
@@ -62,7 +62,7 @@ HIAI_IMPL_ENGINE_PROCESS("JpegEncode", JpegEncode, JC_INPUT_SIZE)
     HIAI_StatusT ret;
     // the stream is end
     if (deviceStreamData->info.isEOS) {
-        HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JpegEncode]  The stream is end");
+        HIAI_ENGINE_LOG(HIAI_IDE_INFO, "[JpegEncode]  The stream is end");
         ret = SendData(0, "DeviceStreamData", deviceStreamData);
         return HIAI_OK;
     }
@@ -80,7 +80,8 @@ HIAI_IMPL_ENGINE_PROCESS("JpegEncode", JpegEncode, JC_INPUT_SIZE)
     //    JPGENC_FORMAT_NV21 = 0x11,
     inData.format = JPGENC_FORMAT_NV12;
     inData.level = 100;
-    inData.alignMethod = 0; //init 0, The value will be assigned again in func Encode. 
+    // alignMethod  0: 128*16  1: 16*2.  Please be consistent with the decoding
+    inData.alignMethod = 1; //init 0, The value will be assigned again in func Encode. 
     ret = dvppJpegEapi->Encode(inData, outData);
     if (ret != HIAI_OK) {
         HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "[JpegEncode]  failed to encode jpeg!");

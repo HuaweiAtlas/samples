@@ -9,11 +9,11 @@
 
 ## 支持的产品
 
-Atlas 300 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
+Atlas 800 (Model 3000), Atlas 300 (Model 3010), Atlas 500 (Model 3010)
 
 ## 支持的版本
 
-1.3.T33.B890 1.3.2.B893 1.31.T12.B120 1.31.T15.B150
+1.3.T33.B890 1.3.2.B893 1.3.5.B896 1.31.T12.B120 1.31.T15.B150
 
 版本号查询方法，在Atlas产品环境下，运行以下命令：
 ```bash
@@ -30,9 +30,13 @@ npu-smi info
     ffmpeg -i test.mp4 -vcodec h264 -bf 0 -g 25 -r 10 -s 1280*720 -an -f h264 test1.264
 ```
 
+##  模型转换
+
+参考[模型转换说明](data/models/README.md)下载并转换相关模型。
+
 ## 编译
 
-编译Atlas300 (Model 3000) 或 Atlas 300 (Model 3010)程序
+编译Atlas 800 (Model 3000) 或 Atlas 300 (Model 3010)程序
 ```bash
 export DDK_HOME= <Atlas 300 model 300* DDK_HOME>/ddk
 cd <Project Root Folder>
