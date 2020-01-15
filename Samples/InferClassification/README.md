@@ -51,19 +51,6 @@ Note: the default run parameter of the compile script build.sh is "A300". It wil
 configure path information in 'graph.config'
 
 model path config
-```bash
-  engines {
-    id: 103
-    engine_name: "SSDDetection"
-    ...
-    ai_config {
-      items {
-        name: "model"
-        value: "../data/models/vgg_ssd_300x300.om" # change to your model path
-      }
-    ...
-  }
-```
 
 ```bash
    engines {
