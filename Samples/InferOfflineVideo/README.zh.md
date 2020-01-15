@@ -28,7 +28,7 @@ npu-smi info
 
 源码下载地址：https://github.com/FFmpeg/FFmpeg/releases
 
-ffmpeg源码编译和安装配置的方法， 可以参考Ascend开发者论坛：https://bbs.huaweicloud.com/forum/thread-25834-1-1.html，
+ffmpeg源码编译和安装配置的方法， 可以参考Ascend开发者论坛：https://bbs.huaweicloud.com/forum/thread-25834-1-1.html ，
 更多Atlas产品交叉编译的方法请参考产品开发指南，或者自行搜索网上资源。
 
 完成安装配置后，需要导出 `ffmpeg` 的路径到环境变量 `FFMPEG_PATH`。路径下应该包含 `include` 和 `lib` 文件夹。
