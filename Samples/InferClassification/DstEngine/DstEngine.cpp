@@ -124,7 +124,7 @@ HIAI_StatusT DstEngine::ProcessResult(const std::string& resultFileTxt, const st
             HIAI_ENGINE_LOG(HIAI_IDE_ERROR, "video_output: failed to open txt result file.");
         }
 
-        tfile  << " score: " <<  det.confidence << endl;
+        tfile  << " score: " <<  score << endl;
     }
     tfile.close();
     return HIAI_OK;
