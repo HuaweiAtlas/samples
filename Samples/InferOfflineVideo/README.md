@@ -25,7 +25,7 @@ npu-smi info
 
 - ffmpeg 4.1
 
-To compile and install ffmpeg with  source code, you can refer to Ascend developers BBS: https://bbs.huaweicloud.com/forum/thread-25834-1-1.html ,
+To compile and install ffmpeg with  source code, you can refer to Ascend developers BBS: https://bbs.huaweicloud.com/blogs/140860 ,
 
 For more information on Atlas cross-compilation, please refer to the product development guide, or search for resources in the internet.
 
